@@ -76,7 +76,7 @@ The initial scope is deliberate: ticket management only. Inbound emails (via Lar
 
 ## 4. System Architecture
 
-Triage is a Laravel package (Composer) consumed inside a host Laravel application. It registers its own route group (`/triage`), a service provider, and a set of migrations. The frontend is a pre-compiled React + Inertia SPA distributed as static assets published to `public/vendor/triage/`.
+Triage is a Laravel package (Composer) consumed inside a host Laravel application. It registers its own route group (`/triage`), a service provider, and a set of migrations. The frontend is a pre-compiled standalone React SPA distributed as static assets published to `public/vendor/triage/` and served through a package-owned Blade shell.
 
 **Key Components:**
 
@@ -84,7 +84,8 @@ Triage is a Laravel package (Composer) consumed inside a host Laravel applicatio
 |---|---|
 | `TriageServiceProvider` | Registers routes, migrations, config, assets, gate |
 | `TriageManager` (`Triage` facade) | Core SDK — all ticket operations go through here |
-| Inertia Controllers | Thin HTTP layer over `TriageManager`; no business logic |
+| Dashboard Shell Controller | Serves the package Blade shell for `/triage` and SPA deep links |
+| Dashboard API Controllers | Thin JSON HTTP layer over `TriageManager`; no business logic |
 | `TriageMailbox` | Laravel Mailbox handler; parses inbound email, delegates to SDK |
 | Gate (`Triage::auth()`) | Controls access to all `/triage/*` routes |
 
@@ -204,14 +205,15 @@ All SDK methods dispatch Laravel events (e.g., `TicketCreated`, `TicketReplied`,
 - Triage does not create database-level foreign key constraints to the host application's users table for these columns.
 - Each user-reference column is indexed for lookup and filtering, and package code is responsible for casting the configured user model key to and from string consistently.
 
-### 6.8 Dashboard SPA (React + Inertia)
+### 6.8 Dashboard UI (Standalone React SPA)
 
 - **Ticket list page** — Table with filters (status, priority, assignee), search, and pagination.
 - **Ticket detail page** — Unified thread showing messages and internal notes (visually distinct), metadata sidebar, reply form, and note form with toggle.
 - **Create ticket modal/page** — Form for manual ticket creation.
 - **Settings page** — Agent-scoped preference management at `/triage/settings`, with sub-navigation (Notifications, Profile, Appearance, Security). Only Notifications is fully implemented in MVP.
 - Pre-compiled; no build step required in host app.
-- Served from `public/vendor/triage/`.
+- Served from `public/vendor/triage/` through a package Blade shell.
+- Client-side routing is owned by the package frontend; server-side data access goes through package JSON endpoints under `/triage/api/*`.
 
 ### 6.9 Agent Notification Preferences
 
@@ -267,22 +269,22 @@ Preferences are upserted on first save (defaults applied on first visit if no re
 | `from_address` | `config('mail.from.address')` | Sender address for outbound ticket emails |
 | `user_model` | `App\Models\User` | Host app's `User` model (for agents and submitter matching) |
 
-### 7.2 API (Inertia endpoints)
+### 7.2 API (dashboard shell + JSON endpoints)
 
-All endpoints require triage gate authorization, except the mailbox webhook.
+All dashboard shell and JSON endpoints require triage gate authorization, except the mailbox webhook.
 
 | Endpoint | Method | Description |
 |---|---|---|
-| `GET /triage` | GET | SPA shell |
-| `GET /triage/tickets` | GET | List tickets (paginated, filtered) |
-| `POST /triage/tickets` | POST | Create ticket |
-| `GET /triage/tickets/{ticket}` | GET | Ticket detail |
-| `PATCH /triage/tickets/{ticket}` | PATCH | Update status / priority / assignee |
-| `POST /triage/tickets/{ticket}/messages` | POST | Reply to ticket |
-| `POST /triage/tickets/{ticket}/notes` | POST | Add internal note |
-| `GET /triage/settings` | GET | Redirect to `/triage/settings/notifications` |
-| `GET /triage/settings/notifications` | GET | Agent notification preferences page |
-| `PATCH /triage/settings/notifications` | PATCH | Save agent notification preferences |
+| `GET /triage` | GET | Dashboard shell |
+| `GET /triage/{view?}` | GET | Dashboard shell for SPA deep links (`tickets/*`, `settings/*`) |
+| `GET /triage/api/tickets` | GET | List tickets (paginated, filtered) |
+| `POST /triage/api/tickets` | POST | Create ticket |
+| `GET /triage/api/tickets/{ticket}` | GET | Ticket detail |
+| `PATCH /triage/api/tickets/{ticket}` | PATCH | Update status / priority / assignee |
+| `POST /triage/api/tickets/{ticket}/messages` | POST | Reply to ticket |
+| `POST /triage/api/tickets/{ticket}/notes` | POST | Add internal note |
+| `GET /triage/api/settings/notifications` | GET | Fetch agent notification preferences |
+| `PATCH /triage/api/settings/notifications` | PATCH | Save agent notification preferences |
 | `POST /triage/mailbox` | POST | Inbound email webhook (Laravel Mailbox) |
 
 ### 7.3 Events

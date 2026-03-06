@@ -99,7 +99,7 @@ Triage uses [Laravel Mailbox](https://github.com/beyondcode/laravel-mailbox) to 
 
 ## Dashboard
 
-The dashboard is a pre-compiled React + Inertia SPA served from `public/vendor/triage/`. No frontend build toolchain is needed in the host application.
+The dashboard is a pre-compiled React SPA served from a package-owned Blade shell and backed by package JSON endpoints under the `/triage` route group. No frontend build toolchain is needed in the host application.
 
 **Features:**
 - Ticket list with filters (status, priority, assignee) and search

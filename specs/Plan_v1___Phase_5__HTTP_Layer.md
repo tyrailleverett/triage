@@ -1,4 +1,4 @@
-# Plan v1 — Phase 5: HTTP Layer — Controllers, Routes, Form Requests
+# Plan v1 — Phase 5: HTTP Layer — Blade Shell, API Controllers, Form Requests
 
 I have created the following plan after thorough exploration and analysis of the codebase. Follow the below plan verbatim. Trust the files and references. Do not re-verify what's written in the plan. Explore only when absolutely necessary. First implement all the proposed file changes and then I'll review all the changes together at the end.
 
@@ -6,13 +6,20 @@ I have created the following plan after thorough exploration and analysis of the
 
 ## Observations
 
-Phase 1 established the package shell with config keys `path` (default `'triage'`) and `middleware` (default `['web']`), the `Triage::auth()` gate callback, and an empty `routes/web.php` stub. Phase 2 built the data layer: `Ticket`, `TicketMessage`, `TicketNote` models with UUID PKs, scopes, and relationships. Phase 3 implemented the complete `TriageManager` SDK with `createTicket()`, `replyToTicket()`, `addNote()`, `updateTicket()`, `assignTicket()`, `resolveTicket()`, `closeTicket()`, and `addInboundMessage()` — all dispatching events. Phase 4 added the email layer with mailables, mailbox handler, and queued processing. The HTTP layer is now the thin shell that connects the dashboard SPA to the SDK.
+Phase 1 established the package shell with config keys `path` (default `'triage'`) and `middleware` (default `['web']`), the `Triage::auth()` gate callback, and an empty `routes/web.php` stub. Phase 2 built the data layer: `Ticket`, `TicketMessage`, and `TicketNote` models with UUID PKs, scopes, and relationships. Phase 3 implemented the complete `TriageManager` SDK with `createTicket()`, `replyToTicket()`, `addNote()`, `updateTicket()`, `assignTicket()`, `resolveTicket()`, `closeTicket()`, and `addInboundMessage()` — all dispatching events. Phase 4 added the email layer with mailables, mailbox handler, and queued processing. The HTTP layer is now the thin shell that connects the package dashboard to the SDK.
 
 ---
 
 ## Approach
 
-This phase builds thin Inertia controllers that delegate entirely to `TriageManager`. Per the PRD's "SDK-first" principle, controllers contain zero business logic — they validate input (via Form Requests), call an SDK method, and return an Inertia response. A gate middleware protects all dashboard routes. Form Requests handle validation. Routes are registered in the service provider with the configurable prefix and middleware stack. The controllers return Inertia responses, preparing for Phase 6's React SPA. The Inertia root view is `triage::app` (the Blade shell created in Phase 1).
+This phase builds a package-owned dashboard shell plus JSON API.
+
+- A Blade view (`triage::app`) serves the compiled React bundle for `/triage` and any dashboard deep link.
+- Thin API controllers delegate entirely to `TriageManager` and return JSON responses.
+- A gate middleware protects both shell routes and API routes.
+- Form Requests validate API payloads.
+
+This keeps the package portable: the host application only needs Laravel's normal web stack, not a package-specific frontend bridge.
 
 ---
 
@@ -25,23 +32,40 @@ A `final` middleware class that gates access to all Triage dashboard routes. Fol
 **`handle(Request $request, Closure $next): Response`**
 
 Logic flow:
-1. Check if the user is authenticated: `$request->user()` — if null, abort 403
-2. Check the `triage` gate: `Gate::check('triage', [$request->user()])` — if false, abort 403
-3. Pass to the next middleware: `return $next($request)`
+1. Check if the user is authenticated: `$request->user()` — if null, abort 403.
+2. Check the `triage` gate: `Gate::check('triage', [$request->user()])` — if false, abort 403.
+3. Pass to the next middleware: `return $next($request)`.
 
 The gate was registered in Phase 1's `TriageServiceProvider::boot()` using the callback from `TriageManager::resolveAuthCallback()`.
 
-This middleware is NOT registered globally. It is applied only to the Triage route group in the route registration (section 5).
+This middleware is not registered globally. It is applied only to the Triage route group in the route registration section below.
 
 ---
 
-## - [ ] 2. Form Requests
+## - [ ] 2. Dashboard Shell Controller
+
+**`src/Http/Controllers/DashboardController.php`**
+
+A `final` single-action controller that returns the package Blade shell view.
+
+**`__invoke(Request $request): View`**
+
+Behavior:
+1. Return `view('triage::app')`.
+2. Do not load ticket data in this controller.
+3. The frontend fetches all ticket and settings data from JSON endpoints under `/triage/api/*`.
+
+The controller exists solely so `/triage`, `/triage/tickets/*`, and `/triage/settings/*` can resolve to the same frontend shell.
+
+---
+
+## - [ ] 3. Form Requests
 
 Create four Form Request classes in `src/Http/Requests/`. Each uses `declare(strict_types=1)`, is `final`, and uses array-style validation rules.
 
 **`src/Http/Requests/CreateTicketRequest.php`**
 
-`authorize(): bool` — returns `true` (authorization is handled by the gate middleware; all authenticated+authorized agents can create tickets)
+`authorize(): bool` — returns `true`.
 
 `rules(): array`
 
@@ -58,7 +82,7 @@ Create four Form Request classes in `src/Http/Requests/`. Each uses `declare(str
 
 **`src/Http/Requests/UpdateTicketRequest.php`**
 
-`authorize(): bool` — returns `true`
+`authorize(): bool` — returns `true`.
 
 `rules(): array`
 
@@ -66,15 +90,15 @@ Create four Form Request classes in `src/Http/Requests/`. Each uses `declare(str
 |---|---|---|
 | `status` | `['sometimes', 'string', Rule::enum(TicketStatus::class)]` | Optional status change |
 | `priority` | `['sometimes', 'string', Rule::enum(TicketPriority::class)]` | Optional priority change |
-| `assignee_id` | `['sometimes', 'string', 'max:255']` | Optional reassignment; omit the field to leave the assignee unchanged |
+| `assignee_id` | `['sometimes', 'nullable', 'string', 'max:255']` | Optional reassignment |
 
-At least one field should be present. Add a custom validation rule or `after` hook that fails if no fields are present in the request.
+At least one field should be present. Add a custom validation rule or `after` hook that fails if none of the supported fields are present.
 
 ---
 
 **`src/Http/Requests/ReplyToTicketRequest.php`**
 
-`authorize(): bool` — returns `true`
+`authorize(): bool` — returns `true`.
 
 `rules(): array`
 
@@ -86,7 +110,7 @@ At least one field should be present. Add a custom validation rule or `after` ho
 
 **`src/Http/Requests/AddNoteRequest.php`**
 
-`authorize(): bool` — returns `true`
+`authorize(): bool` — returns `true`.
 
 `rules(): array`
 
@@ -96,95 +120,86 @@ At least one field should be present. Add a custom validation rule or `after` ho
 
 ---
 
-## - [ ] 3. Controllers
+## - [ ] 4. API Controllers
 
-Create three controller classes in `src/Http/Controllers/`. All are `final`, use `declare(strict_types=1)`, and follow thin-controller conventions (no business logic).
+Create four controller classes in `src/Http/Controllers/`. All are `final`, use `declare(strict_types=1)`, and follow thin-controller conventions.
 
-**`src/Http/Controllers/TicketController.php`**
+### `src/Http/Controllers/TicketApiController.php`
 
-Resource-style controller (not invokable). Five methods:
+Resource-style controller. Five methods:
 
-### `create(): Response`
-
-1. Return Inertia render: `Inertia::render('Tickets/Create')`
-
-### `index(Request $request): Response`
+#### `index(Request $request): JsonResponse`
 
 1. Build a query on `Ticket` with optional filters from query parameters:
-   - `status` (string) → scope: `Ticket::where('status', $status)`
-   - `priority` (string) → scope: `Ticket::where('priority', $priority)`
-   - `assignee_id` (string) → scope: `Ticket::assignedTo($assigneeId)`
-   - `search` (string) → search `subject` and `submitter_email` columns using `LIKE %term%`
-2. Eager-load `messages` count (for display)
-3. Order by `created_at` descending (newest first)
-4. Paginate with 25 per page
-5. Return Inertia render: `Inertia::render('Tickets/Index', ['tickets' => $paginated, 'filters' => $request->only(['status', 'priority', 'assignee_id', 'search'])])`
+   - `status` → `where('status', $status)`
+   - `priority` → `where('priority', $priority)`
+   - `assignee_id` → `assignedTo($assigneeId)`
+   - `search` → search `subject` and `submitter_email` with `LIKE %term%`
+2. Eager-load `messages` count.
+3. Order by `created_at` descending.
+4. Paginate with 25 per page.
+5. Return JSON with paginated ticket data plus the active filters.
 
-### `show(Ticket $ticket): Response`
+#### `show(Ticket $ticket): JsonResponse`
 
-1. Eager-load `messages` (ordered ascending), `notes` (ordered ascending), `submitter`, `assignee`
-2. Return Inertia render: `Inertia::render('Tickets/Show', ['ticket' => $ticket])`
+1. Eager-load `messages` (ordered ascending), `notes` (ordered ascending), `submitter`, and `assignee`.
+2. Return the serialized ticket as JSON.
 
-### `store(CreateTicketRequest $request): RedirectResponse`
+#### `store(CreateTicketRequest $request): JsonResponse`
 
-1. Extract validated data from the form request
-2. Determine priority: if `priority` field is present, cast to `TicketPriority` enum; otherwise default to `TicketPriority::Normal`
-3. Call `$triage->createTicket(subject: ..., body: ..., submitterEmail: ..., submitterName: ..., priority: ..., assigneeId: ...)`
-4. Redirect to the new ticket's show page: `redirect()->route('triage.tickets.show', $ticket)`
+1. Extract validated data.
+2. Determine priority: cast provided value to `TicketPriority`; default to `TicketPriority::Normal`.
+3. Call `$triage->createTicket(...)`.
+4. Return `201` JSON with the new ticket payload and a `location` field pointing to the dashboard URL for that ticket.
 
-`TriageManager` is injected via constructor: `public function __construct(private readonly TriageManager $triage)`
+#### `update(UpdateTicketRequest $request, Ticket $ticket): JsonResponse`
 
-### `update(UpdateTicketRequest $request, Ticket $ticket): RedirectResponse`
+1. Extract validated data.
+2. Build parameters: cast `status` and `priority` when present; pass `assignee_id` as-is.
+3. Call `$triage->updateTicket(...)`.
+4. Return `200` JSON with the refreshed ticket payload.
 
-1. Extract validated data
-2. Build parameters: cast `status` to `TicketStatus` (if present), `priority` to `TicketPriority` (if present), pass `assignee_id` as-is
-3. Call `$triage->updateTicket($ticket, status: ..., priority: ..., assigneeId: ...)`
-4. Redirect back to the ticket show page
+Constructor: `public function __construct(private readonly TriageManager $triage)`
 
 ---
 
-**`src/Http/Controllers/TicketMessageController.php`**
+### `src/Http/Controllers/TicketMessageApiController.php`
 
 Single-method controller for posting replies.
 
-### `store(ReplyToTicketRequest $request, Ticket $ticket): RedirectResponse`
+#### `store(ReplyToTicketRequest $request, Ticket $ticket): JsonResponse`
 
-1. Resolve the authenticated user model from the request
-2. Call `$triage->replyToTicket($ticket, body: $request->validated('body'), agent: $request->user())`
-3. Redirect back to the ticket show page
+1. Resolve the authenticated user model from the request.
+2. Call `$triage->replyToTicket($ticket, body: $request->validated('body'), agent: $request->user())`.
+3. Return `201` JSON with the newly created outbound message.
 
 Constructor: `public function __construct(private readonly TriageManager $triage)`
 
 ---
 
-**`src/Http/Controllers/TicketNoteController.php`**
+### `src/Http/Controllers/TicketNoteApiController.php`
 
 Single-method controller for adding internal notes.
 
-### `store(AddNoteRequest $request, Ticket $ticket): RedirectResponse`
+#### `store(AddNoteRequest $request, Ticket $ticket): JsonResponse`
 
-1. Resolve the authenticated user model from the request
-2. Call `$triage->addNote($ticket, body: $request->validated('body'), agent: $request->user())`
-3. Redirect back to the ticket show page
+1. Resolve the authenticated user model from the request.
+2. Call `$triage->addNote($ticket, body: $request->validated('body'), agent: $request->user())`.
+3. Return `201` JSON with the newly created note.
 
 Constructor: `public function __construct(private readonly TriageManager $triage)`
 
 ---
 
-## - [ ] 4. Inertia Middleware Configuration
+### `src/Http/Controllers/SettingsApiController.php`
 
-For the Inertia integration to work within a package context, the route group needs the Inertia middleware applied. `inertiajs/inertia-laravel` is a package dependency for the dashboard, so this phase should assume the class is present rather than design around a missing install.
+This controller may be a minimal stub in Phase 5 and will be completed in Phase 7. Create it now so the API surface is established.
 
-**`src/Http/Middleware/HandleTriageInertiaRequests.php`**
+Methods:
+- `notifications(Request $request): JsonResponse` — returns the authenticated agent's current preference payload.
+- `updateNotifications(Request $request): JsonResponse` — validates and persists preference toggles, then returns the saved payload.
 
-A `final` middleware that sets the Inertia root view to the package's Blade shell.
-
-**`handle(Request $request, Closure $next): Response`**
-
-1. Set the Inertia root view: `Inertia::setRootView('triage::app')`
-2. Pass to the next middleware: `return $next($request)`
-
-This ensures Inertia renders using the package's own layout, not the host app's layout.
+Phase 7 fills in the model, validation details, and frontend behavior.
 
 ---
 
@@ -192,29 +207,49 @@ This ensures Inertia renders using the package's own layout, not the host app's 
 
 **`routes/web.php`**
 
-Replace the empty route file stub (from Phase 1) with the full route definitions.
+Replace the empty route file stub with a full shell-plus-API route map.
 
 All routes are within a single group with:
 - Prefix: `config('triage.path')` (default `'triage'`)
-- Middleware: merge `config('triage.middleware')` (default `['web']`) with `AuthorizeTriage::class` and `HandleTriageInertiaRequests::class`
+- Middleware: merge `config('triage.middleware')` (default `['web']`) with `AuthorizeTriage::class`
 - Name prefix: `triage.`
+
+### Shell routes
+
+These routes all return the package Blade shell:
+
+| HTTP Method | URI Pattern | Controller | Route Name |
+|---|---|---|---|
+| `GET` | `/` | `DashboardController` | `triage.dashboard` |
+| `GET` | `/{view?}` | `DashboardController` | `triage.dashboard.catchall` |
+
+The catch-all route uses a regex so it matches dashboard deep links such as:
+- `/triage/tickets`
+- `/triage/tickets/create`
+- `/triage/tickets/{ticket}`
+- `/triage/settings`
+- `/triage/settings/notifications`
+
+It must explicitly exclude `api/*` and mailbox ingress routes.
+
+### API routes
+
+Register these under an `api` prefix inside the same authorized group:
 
 | HTTP Method | URI Pattern | Controller@Method | Route Name |
 |---|---|---|---|
-| `GET` | `/` | `TicketController@index` | `triage.tickets.index` |
-| `GET` | `/tickets` | `TicketController@index` | `triage.tickets.index` |
-| `GET` | `/tickets/create` | `TicketController@create` | `triage.tickets.create` |
-| `POST` | `/tickets` | `TicketController@store` | `triage.tickets.store` |
-| `GET` | `/tickets/{ticket}` | `TicketController@show` | `triage.tickets.show` |
-| `PATCH` | `/tickets/{ticket}` | `TicketController@update` | `triage.tickets.update` |
-| `POST` | `/tickets/{ticket}/messages` | `TicketMessageController@store` | `triage.tickets.messages.store` |
-| `POST` | `/tickets/{ticket}/notes` | `TicketNoteController@store` | `triage.tickets.notes.store` |
+| `GET` | `/api/tickets` | `TicketApiController@index` | `triage.api.tickets.index` |
+| `POST` | `/api/tickets` | `TicketApiController@store` | `triage.api.tickets.store` |
+| `GET` | `/api/tickets/{ticket}` | `TicketApiController@show` | `triage.api.tickets.show` |
+| `PATCH` | `/api/tickets/{ticket}` | `TicketApiController@update` | `triage.api.tickets.update` |
+| `POST` | `/api/tickets/{ticket}/messages` | `TicketMessageApiController@store` | `triage.api.tickets.messages.store` |
+| `POST` | `/api/tickets/{ticket}/notes` | `TicketNoteApiController@store` | `triage.api.tickets.notes.store` |
+| `GET` | `/api/settings/notifications` | `SettingsApiController@notifications` | `triage.api.settings.notifications.show` |
+| `PATCH` | `/api/settings/notifications` | `SettingsApiController@updateNotifications` | `triage.api.settings.notifications.update` |
 
-The root route (`GET /`) redirects or aliases to `tickets.index` so accessing `/triage` directly shows the ticket list.
+The mailbox webhook remains outside this dashboard route group. Laravel Mailbox owns provider-facing ingress.
 
-The mailbox webhook is intentionally not part of this gate-protected dashboard group. Laravel Mailbox owns the provider-facing ingress route; Triage's responsibility in this phase is the authenticated dashboard HTTP surface.
-
-The `{ticket}` route parameter binds to the `Ticket` model by UUID (implicit model binding using the default `id` route key since `getRouteKeyName()` is not overridden — the model uses UUID as the primary key and `id` is the route key by default).
+The `{ticket}` route parameter binds to the `Ticket` model by UUID using implicit model binding on `id`.
 
 ---
 
@@ -222,33 +257,25 @@ The `{ticket}` route parameter binds to the `Ticket` model by UUID (implicit mod
 
 Update `TriageServiceProvider::configurePackage()` to use `hasRoutes('web')` as already planned in Phase 1. Verify the route file is loaded correctly.
 
-Additionally, register `inertiajs/inertia-laravel` as a required Composer dependency for the package. The dashboard is a core feature, so the HTTP layer should not be designed around Inertia being optional.
-
-Add `inertiajs/inertia-laravel` to `composer.json` as a required dependency:
-
-```
-"require": {
-    "php": "^8.4",
-    "beyondcode/laravel-mailbox": "^1.0",
-    "inertiajs/inertia-laravel": "^2.0",
-    "spatie/laravel-package-tools": "^1.16",
-    "illuminate/contracts": "^11.0||^12.0"
-}
-```
+Do not add any server-side frontend transport dependency for the dashboard. The transport is a standard Blade shell plus JSON endpoints.
 
 ---
 
 ## - [ ] 7. URL Structure Summary
 
-| URL | Bound Model | Route Key | Description |
-|---|---|---|---|
-| `/triage` | — | — | SPA shell / ticket list |
-| `/triage/tickets` | — | — | Ticket list (paginated, filtered) |
-| `/triage/tickets/{ticket}` | `Ticket` | `id` (UUID) | Ticket detail view |
-| `/triage/tickets` (POST) | — | — | Create ticket |
-| `/triage/tickets/{ticket}` (PATCH) | `Ticket` | `id` (UUID) | Update ticket metadata |
-| `/triage/tickets/{ticket}/messages` (POST) | `Ticket` | `id` (UUID) | Add agent reply |
-| `/triage/tickets/{ticket}/notes` (POST) | `Ticket` | `id` (UUID) | Add internal note |
+| URL | Description |
+|---|---|
+| `/triage` | Dashboard shell root |
+| `/triage/tickets` | Dashboard shell for ticket list |
+| `/triage/tickets/{ticket}` | Dashboard shell for ticket detail |
+| `/triage/tickets/create` | Dashboard shell for manual ticket creation |
+| `/triage/settings` | Dashboard shell for settings section |
+| `/triage/settings/notifications` | Dashboard shell for notification preferences |
+| `/triage/api/tickets` | Ticket list JSON / create ticket JSON |
+| `/triage/api/tickets/{ticket}` | Ticket detail JSON / update metadata JSON |
+| `/triage/api/tickets/{ticket}/messages` | Add agent reply JSON |
+| `/triage/api/tickets/{ticket}/notes` | Add internal note JSON |
+| `/triage/api/settings/notifications` | Settings preferences JSON |
 
 ---
 
@@ -256,122 +283,128 @@ Add `inertiajs/inertia-laravel` to `composer.json` as a required dependency:
 
 ### Feature Tests
 
-**`tests/Feature/Http/TicketControllerTest.php`**
+**`tests/Feature/Http/DashboardControllerTest.php`**
+
+- `it returns the dashboard shell for the root route`
+- `it returns the dashboard shell for deep links such as tickets and settings`
+- `it denies access to unauthorized users`
+- `it denies access to unauthenticated users`
+
+Assertions should verify the response is `200` and renders the `triage::app` view.
+
+---
+
+**`tests/Feature/Http/TicketApiControllerTest.php`**
 
 Uses `RefreshDatabase`. All tests authenticate a user and authorize them via the triage gate.
 
-**Setup:** Each test creates a workbench User, authenticates them, and configures `Triage::auth()` to allow access.
-
-Because these routes run through the `web` middleware stack and return Inertia responses, validation assertions should check redirects plus session errors rather than expecting JSON `422` responses.
+Because these endpoints return JSON, validation assertions should check `422` JSON responses rather than redirects.
 
 **index:**
-- `it returns a successful response for the ticket list` — GET `/triage/tickets`, assert 200
-- `it paginates tickets` — create 30 tickets, GET the list, assert pagination meta is present (25 per page)
-- `it filters tickets by status` — create Open and Closed tickets, GET with `?status=open`, assert only Open tickets returned
-- `it filters tickets by priority` — create Low and High tickets, GET with `?priority=high`, assert only High returned
-- `it filters tickets by assignee` — create assigned and unassigned tickets, GET with `?assignee_id=X`, assert only assigned returned
-- `it searches tickets by subject` — create tickets with different subjects, GET with `?search=login`, assert matching tickets returned
-- `it denies access to unauthorized users` — don't configure gate, GET tickets, assert 403
-- `it denies access to unauthenticated users` — don't authenticate, GET tickets, assert 403
+- `it returns a successful response for the ticket list`
+- `it paginates tickets`
+- `it filters tickets by status`
+- `it filters tickets by priority`
+- `it filters tickets by assignee`
+- `it searches tickets by subject`
+- `it denies access to unauthorized users`
+- `it denies access to unauthenticated users`
 
 **show:**
-- `it returns a successful response for a ticket detail` — create a ticket, GET `/triage/tickets/{id}`, assert 200
-- `it eager loads messages and notes` — create ticket with messages and notes, GET detail, assert all are present in the response
-- `it returns 404 for nonexistent ticket` — GET with a random UUID, assert 404
-
-**create:**
-- `it returns a successful response for the create ticket page` — GET `/triage/tickets/create`, assert 200
-- `it denies access to unauthorized users on the create ticket page` — assert 403
+- `it returns a successful response for a ticket detail`
+- `it eager loads messages and notes`
+- `it returns 404 for nonexistent ticket`
 
 **store:**
-- `it creates a ticket with valid data` — POST with valid payload, assert redirect and ticket exists in DB
-- `it validates required fields` — POST with empty payload, assert redirect with validation errors for subject, body, submitter_email, submitter_name
-- `it validates email format` — POST with invalid email, assert redirect with validation errors
-- `it validates priority enum value` — POST with `priority=invalid`, assert redirect with validation errors
-- `it defaults priority to Normal when not provided` — POST without priority, assert ticket has Normal priority
-- `it assigns a ticket when assignee_id is provided` — POST with assignee_id, assert ticket has assignee
+- `it creates a ticket with valid data`
+- `it validates required fields`
+- `it validates email format`
+- `it validates priority enum value`
+- `it defaults priority to Normal when not provided`
+- `it assigns a ticket when assignee_id is provided`
 
 **update:**
-- `it updates ticket status` — PATCH with `status=resolved`, assert ticket status changed
-- `it updates ticket priority` — PATCH with `priority=high`, assert priority changed
-- `it updates assignee` — PATCH with `assignee_id`, assert assignee changed
-- `it validates status enum value` — PATCH with `status=invalid`, assert redirect with validation errors
-- `it validates priority enum value` — PATCH with `priority=invalid`, assert redirect with validation errors
-- `it rejects empty update` — PATCH with no fields, assert redirect with validation errors
+- `it updates ticket status`
+- `it updates ticket priority`
+- `it updates assignee`
+- `it validates status enum value`
+- `it validates priority enum value`
+- `it rejects empty update`
 
 ---
 
-**`tests/Feature/Http/TicketMessageControllerTest.php`**
+**`tests/Feature/Http/TicketMessageApiControllerTest.php`**
 
-- `it creates a reply on a ticket` — POST to `/triage/tickets/{id}/messages` with `body`, assert outbound message exists on ticket
-- `it validates body is required` — POST with empty body, assert redirect with validation errors
-- `it validates body max length` — POST with 10001 chars, assert redirect with validation errors
-- `it denies access to unauthorized users` — assert 403
-- `it sets the authenticated user as author` — assert reply's `author_id` matches authenticated user
+- `it creates a reply on a ticket`
+- `it validates body is required`
+- `it validates body max length`
+- `it denies access to unauthorized users`
+- `it sets the authenticated user as author`
 
 ---
 
-**`tests/Feature/Http/TicketNoteControllerTest.php`**
+**`tests/Feature/Http/TicketNoteApiControllerTest.php`**
 
-- `it creates a note on a ticket` — POST to `/triage/tickets/{id}/notes` with `body`, assert note exists on ticket
-- `it validates body is required` — POST with empty body, assert redirect with validation errors
-- `it denies access to unauthorized users` — assert 403
-- `it sets the authenticated user as author` — assert note's `author_id` matches authenticated user
+- `it creates a note on a ticket`
+- `it validates body is required`
+- `it denies access to unauthorized users`
+- `it sets the authenticated user as author`
 
 ---
 
 **`tests/Feature/Http/Middleware/AuthorizeTriageTest.php`**
 
-- `it allows access when gate passes` — configure `Triage::auth()` to return true, make request, assert 200
-- `it denies access when gate fails` — configure `Triage::auth()` to return false, make request, assert 403
-- `it denies access to unauthenticated users` — make request without auth, assert 403
-- `it uses the default gate in local environment` — don't set `Triage::auth()`, set environment to local, assert 200
-- `it uses the default gate in production environment` — don't set `Triage::auth()`, set environment to production, assert 403
+- `it allows access when gate passes`
+- `it denies access when gate fails`
+- `it denies access to unauthenticated users`
+- `it uses the default gate in local environment`
+- `it uses the default gate in production environment`
 
 ---
 
-## Controller → SDK Flow Diagram
+## Dashboard → API Flow Diagram
 
 ```mermaid
 sequenceDiagram
-    participant Browser as Agent Browser
+    participant Browser as React Dashboard
     participant MW as AuthorizeTriage Middleware
+    participant Shell as DashboardController
     participant FR as Form Request
-    participant Ctrl as Controller
+    participant Ctrl as API Controller
     participant SDK as TriageManager
     participant DB as Database
     participant Events as Laravel Events
 
     Browser->>MW: GET /triage/tickets
-    MW->>MW: Check auth + gate
-    MW->>Ctrl: TicketController@index
-    Ctrl->>DB: Ticket query (filters, pagination)
-    Ctrl-->>Browser: Inertia::render(Tickets/Index)
+    MW->>Shell: DashboardController
+    Shell-->>Browser: triage::app
 
-    Browser->>MW: POST /triage/tickets
-    MW->>MW: Check auth + gate
+    Browser->>MW: GET /triage/api/tickets
+    MW->>Ctrl: TicketApiController@index
+    Ctrl->>DB: Ticket query (filters, pagination)
+    Ctrl-->>Browser: JSON ticket list
+
+    Browser->>MW: POST /triage/api/tickets
     MW->>FR: CreateTicketRequest (validate)
-    FR->>Ctrl: TicketController@store
+    FR->>Ctrl: TicketApiController@store
     Ctrl->>SDK: createTicket(...)
     SDK->>DB: INSERT ticket + message
     SDK->>Events: dispatch(TicketCreated)
-    Ctrl-->>Browser: redirect to show
+    Ctrl-->>Browser: 201 JSON
 
-    Browser->>MW: POST /triage/tickets/{id}/messages
-    MW->>MW: Check auth + gate
+    Browser->>MW: POST /triage/api/tickets/{id}/messages
     MW->>FR: ReplyToTicketRequest (validate)
-    FR->>Ctrl: TicketMessageController@store
+    FR->>Ctrl: TicketMessageApiController@store
     Ctrl->>SDK: replyToTicket(...)
     SDK->>DB: INSERT ticket_message
     SDK->>Events: dispatch(TicketReplied)
-    Ctrl-->>Browser: redirect back
+    Ctrl-->>Browser: 201 JSON
 
-    Browser->>MW: POST /triage/tickets/{id}/notes
-    MW->>MW: Check auth + gate
+    Browser->>MW: POST /triage/api/tickets/{id}/notes
     MW->>FR: AddNoteRequest (validate)
-    FR->>Ctrl: TicketNoteController@store
+    FR->>Ctrl: TicketNoteApiController@store
     Ctrl->>SDK: addNote(...)
     SDK->>DB: INSERT ticket_note
     SDK->>Events: dispatch(TicketNoteAdded)
-    Ctrl-->>Browser: redirect back
+    Ctrl-->>Browser: 201 JSON
 ```

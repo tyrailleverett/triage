@@ -16,17 +16,19 @@ The Notifications sub-page shows a card titled "Notification Preferences" contai
 
 ## Observations
 
-Phases 1–6 built the complete package foundation, data layer, SDK, email integration, HTTP layer, and ticket management frontend. No per-agent preference storage exists yet. The `triage_agent_preferences` table and its associated model, controller, routes, and frontend pages are entirely new work introduced in this phase. Phase 5's `SettingsController` stub (if present) should be replaced or extended here; otherwise a new controller is created. The host User model key is stored as a string for compatibility, consistent with the existing approach for `submitter_id`, `assignee_id`, and `author_id`.
+Phases 1 through 6 built the package foundation, data layer, SDK, email integration, Blade shell, JSON API, and standalone React dashboard. No per-agent preference storage exists yet. The `triage_agent_preferences` table and its associated model, API controller behavior, and frontend screens are entirely new work introduced in this phase. The host User model key is stored as a string for compatibility, consistent with the existing approach for `submitter_id`, `assignee_id`, and `author_id`.
 
 ---
 
 ## Approach
 
-This phase adds a Settings area to the Triage dashboard, accessible at `/triage/settings`. It covers three layers:
+This phase adds a Settings area to the Triage dashboard, accessible at `/triage/settings` in the browser and backed by `/triage/api/settings/notifications` on the server.
+
+It covers three layers:
 
 1. **Data layer** — A new `triage_agent_preferences` table storing per-agent notification toggle states.
-2. **HTTP layer** — New Inertia controllers and routes for the settings area.
-3. **Frontend** — New React settings pages under `resources/js/Pages/Settings/` with a shared settings sub-navigation layout.
+2. **HTTP layer** — JSON endpoints for fetching and saving the authenticated agent's preferences.
+3. **Frontend** — React settings pages under `resources/js/Pages/Settings/` with a shared settings sub-navigation layout.
 
 ---
 
@@ -52,9 +54,9 @@ triage_agent_preferences
 └── updated_at
 ```
 
-The `user_id` column has a unique constraint — one row per agent, created on first access (upsert pattern).
+The `user_id` column has a unique constraint — one row per agent, created on first access.
 
-Register the migration stub in `TriageServiceProvider::boot()` using `$this->loadMigrationsFrom()` alongside the existing migrations, following the established pattern.
+Register the migration stub in `TriageServiceProvider::boot()` using `$this->loadMigrationsFrom()` alongside the existing migrations.
 
 ---
 
@@ -62,48 +64,17 @@ Register the migration stub in `TriageServiceProvider::boot()` using `$this->loa
 
 **`src/Models/AgentPreference.php`**
 
-```php
-<?php
-
-declare(strict_types=1);
-
-namespace HotReloadStudios\Triage\Models;
-
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
-use Illuminate\Database\Eloquent\Model;
-
-final class AgentPreference extends Model
-{
-    use HasUuids;
-
-    protected $table = 'triage_agent_preferences';
-
-    protected $fillable = [
-        'user_id',
-        'notify_ticket_assigned',
-        'notify_ticket_replied',
-        'notify_note_added',
-        'notify_status_changed',
-        'daily_digest',
-        'email_notifications',
-    ];
-
-    protected $casts = [
-        'notify_ticket_assigned' => 'boolean',
-        'notify_ticket_replied'  => 'boolean',
-        'notify_note_added'      => 'boolean',
-        'notify_status_changed'  => 'boolean',
-        'daily_digest'           => 'boolean',
-        'email_notifications'    => 'boolean',
-    ];
-}
-```
+Create a `final` Eloquent model with:
+- `HasUuids`
+- `$table = 'triage_agent_preferences'`
+- `$fillable` including all preference columns plus `user_id`
+- `$casts` for every toggle column as `boolean`
 
 ---
 
 ## - [ ] 3. TypeScript Type Definitions
 
-Add the following interface to **`resources/js/types/index.ts`**:
+Add `AgentPreferences` to **`resources/js/types/index.ts`**:
 
 ```ts
 interface AgentPreferences {
@@ -118,101 +89,46 @@ interface AgentPreferences {
 
 ---
 
-## - [ ] 4. Settings Controller
+## - [ ] 4. Settings API Controller
 
-**`src/Http/Controllers/SettingsController.php`**
+**`src/Http/Controllers/SettingsApiController.php`**
 
-If a `SettingsController` stub exists from Phase 5, replace its body. Otherwise create it fresh.
+If a stub was created in Phase 5, replace it with the real implementation.
 
-```php
-<?php
+Methods:
 
-declare(strict_types=1);
+### `notifications(Request $request): JsonResponse`
 
-namespace HotReloadStudios\Triage\Http\Controllers;
+1. Resolve the authenticated user's key as a string.
+2. `firstOrCreate()` an `AgentPreference` row for that user with default values.
+3. Return `200` JSON with the normalized preference payload.
 
-use HotReloadStudios\Triage\Models\AgentPreference;
-use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
-use Inertia\Inertia;
-use Inertia\Response;
+### `updateNotifications(Request $request): JsonResponse`
 
-final class SettingsController
-{
-    public function notifications(Request $request): Response
-    {
-        $userId = (string) $request->user()->getKey();
+1. Validate all preference fields as required booleans.
+2. Resolve the authenticated user's key as a string.
+3. `updateOrCreate()` the preference row.
+4. Return `200` JSON with the saved preference payload.
 
-        $preferences = AgentPreference::firstOrCreate(
-            ['user_id' => $userId],
-            [
-                'notify_ticket_assigned' => true,
-                'notify_ticket_replied'  => true,
-                'notify_note_added'      => false,
-                'notify_status_changed'  => true,
-                'daily_digest'           => false,
-                'email_notifications'    => true,
-            ]
-        );
-
-        return Inertia::render('Settings/Notifications', [
-            'preferences' => [
-                'notify_ticket_assigned' => $preferences->notify_ticket_assigned,
-                'notify_ticket_replied'  => $preferences->notify_ticket_replied,
-                'notify_note_added'      => $preferences->notify_note_added,
-                'notify_status_changed'  => $preferences->notify_status_changed,
-                'daily_digest'           => $preferences->daily_digest,
-                'email_notifications'    => $preferences->email_notifications,
-            ],
-        ]);
-    }
-
-    public function updateNotifications(Request $request): RedirectResponse
-    {
-        $validated = $request->validate([
-            'notify_ticket_assigned' => ['required', 'boolean'],
-            'notify_ticket_replied'  => ['required', 'boolean'],
-            'notify_note_added'      => ['required', 'boolean'],
-            'notify_status_changed'  => ['required', 'boolean'],
-            'daily_digest'           => ['required', 'boolean'],
-            'email_notifications'    => ['required', 'boolean'],
-        ]);
-
-        $userId = (string) $request->user()->getKey();
-
-        AgentPreference::updateOrCreate(
-            ['user_id' => $userId],
-            $validated
-        );
-
-        return redirect()->route('triage.settings.notifications');
-    }
-}
-```
+This controller should not return redirects. It is a pure JSON endpoint consumed by the React dashboard.
 
 ---
 
 ## - [ ] 5. Routes
 
-**Update the routes file** (the file registered in `TriageServiceProvider`, e.g. `routes/triage.php`).
+Update the Triage routes file so the settings API lives under the existing authorized `/triage/api` group.
 
-Add the following routes inside the existing authenticated route group, alongside the ticket routes:
+Required routes:
 
 ```php
-// Settings
-Route::get('settings', fn () => redirect()->route('triage.settings.notifications'))
-    ->name('triage.settings');
+Route::get('api/settings/notifications', [SettingsApiController::class, 'notifications'])
+    ->name('triage.api.settings.notifications.show');
 
-Route::get('settings/notifications', [SettingsController::class, 'notifications'])
-    ->name('triage.settings.notifications');
-
-Route::patch('settings/notifications', [SettingsController::class, 'updateNotifications'])
-    ->name('triage.settings.notifications.update');
+Route::patch('api/settings/notifications', [SettingsApiController::class, 'updateNotifications'])
+    ->name('triage.api.settings.notifications.update');
 ```
 
-Import `SettingsController` at the top of the routes file.
-
-The `GET /triage/settings` bare route redirects to `/triage/settings/notifications` so the sidebar nav link for "Settings" lands on a real page.
+Do not add server-side redirect routes for `/triage/settings`. The dashboard shell catch-all from Phase 5 already serves that URL, and the frontend router handles redirecting `/settings` to `/settings/notifications` client-side.
 
 ---
 
@@ -220,20 +136,23 @@ The `GET /triage/settings` bare route redirects to `/triage/settings/notificatio
 
 **`resources/js/Components/SettingsNav.tsx`**
 
-A vertical sub-navigation list rendered inside the Settings pages. It links to each settings section.
+A vertical sub-navigation list rendered inside the Settings pages.
 
 **Props:** `{ active: 'profile' | 'notifications' | 'appearance' | 'security' }`
 
-Renders a list of nav items:
+Renders nav items:
 
-| Label | Route name | Icon suggestion |
+| Label | Path | Icon suggestion |
 |---|---|---|
-| Profile | `triage.settings.profile` (placeholder — no href yet) | User circle icon |
-| Notifications | `triage.settings.notifications` | Bell icon |
-| Appearance | `triage.settings.appearance` (placeholder) | Paint brush icon |
-| Security | `triage.settings.security` (placeholder) | Shield icon |
+| Profile | placeholder only | User circle icon |
+| Notifications | `/settings/notifications` | Bell icon |
+| Appearance | placeholder only | Paint brush icon |
+| Security | placeholder only | Shield icon |
 
-Active item is visually highlighted (slightly lighter background, matching the style in `art/settings.png`). Placeholder items render as non-linking `<span>` elements for MVP since their pages are not implemented yet.
+Rules:
+- Active item is visually highlighted.
+- Real destinations use `NavLink` or `Link` from `react-router-dom`.
+- Placeholder items render as non-linking `<span>` elements for MVP.
 
 ---
 
@@ -241,46 +160,48 @@ Active item is visually highlighted (slightly lighter background, matching the s
 
 **`resources/js/Pages/Settings/Notifications.tsx`**
 
-> **Design reference**: `art/settings.png`
+The page mirrors `art/settings.png`.
 
-**Inertia Props:**
+### Data flow
 
-| Prop | Type | Source |
-|---|---|---|
-| `preferences` | `AgentPreferences` | From `SettingsController::notifications()` |
+1. Fetch preferences from `GET /triage/api/settings/notifications` on mount.
+2. Initialize local component state with the returned `AgentPreferences` payload.
+3. Render a loading state until the initial fetch completes.
 
-**Page layout** — mirrors `art/settings.png`:
+### Layout
 
-1. **Page header** (full-width top bar within main content):
-   - Left: Title "Settings", subtitle "Manage your account and workspace preferences"
-   - Right: "Save Changes" button (blue, triggers form submit)
-
+1. **Page header**:
+   - Left: Title `Settings`, subtitle `Manage your account and workspace preferences`
+   - Right: `Save Changes` button
 2. **Two-column body**:
-   - Left: `SettingsNav` component with `active="notifications"`
-   - Right: Main content card with title "Notification Preferences"
+   - Left: `SettingsNav` with `active="notifications"`
+   - Right: Main content card titled `Notification Preferences`
 
-3. **Notification toggle rows** — 6 rows in the card, in this order:
+### Toggle rows
 
-   | Toggle key | Label | Description |
-   |---|---|---|
-   | `notify_ticket_assigned` | New ticket assigned | Get notified when a ticket is assigned to you |
-   | `notify_ticket_replied` | Ticket replied | Get notified when a customer replies to your ticket |
-   | `notify_note_added` | Internal note added | Get notified when a teammate adds an internal note |
-   | `notify_status_changed` | Status changed | Get notified when a ticket status is updated |
-   | `daily_digest` | Daily digest | Receive a daily summary of your queue activity |
-   | `email_notifications` | Email notifications | Send notifications to your email address |
+| Toggle key | Label | Description |
+|---|---|---|
+| `notify_ticket_assigned` | New ticket assigned | Get notified when a ticket is assigned to you |
+| `notify_ticket_replied` | Ticket replied | Get notified when a customer replies to your ticket |
+| `notify_note_added` | Internal note added | Get notified when a teammate adds an internal note |
+| `notify_status_changed` | Status changed | Get notified when a ticket status is updated |
+| `daily_digest` | Daily digest | Receive a daily summary of your queue activity |
+| `email_notifications` | Email notifications | Send notifications to your email address |
 
-   Each row:
-   - Left: bold label + smaller gray description text below it
-   - Right: toggle switch component
+Each row renders:
+- label
+- description
+- toggle switch on the right
 
-4. **Form behavior**:
-   - Uses `useForm()` from `@inertiajs/react` initialized with the `preferences` prop values
-   - Each toggle's `onChange` calls `setData()` to update the form state
-   - The "Save Changes" button submits a `PATCH` request to `route('triage.settings.notifications.update')`
-   - On success, the page reloads via Inertia redirect and shows the saved state
+### Save behavior
 
-**Layout:** Wrapped in `TriageLayout`.
+1. Clicking `Save Changes` sends `PATCH /triage/api/settings/notifications` with the local state payload.
+2. While the request is pending, disable the button and toggles.
+3. On success, keep the saved state in local memory and show a lightweight success state.
+4. On `422`, surface field errors.
+5. On network/server failure, show a non-blocking error state and keep unsaved edits visible.
+
+Wrap the page in `TriageLayout`.
 
 ---
 
@@ -291,6 +212,7 @@ Active item is visually highlighted (slightly lighter background, matching the s
 A reusable toggle switch component.
 
 **Props:**
+
 ```ts
 interface ToggleProps {
     checked: boolean
@@ -300,11 +222,11 @@ interface ToggleProps {
 ```
 
 Renders an accessible toggle switch:
-- When `checked` is `true`: blue background (`bg-blue-600`)
-- When `checked` is `false`: dark gray background (matching the OFF state in the screenshot)
-- Uses a `<button role="switch" aria-checked={checked}>` for accessibility
-- The thumb (white circle) slides on toggle
-- Clicking calls `onChange(!checked)`
+- `checked = true` → blue background
+- `checked = false` → dark gray background
+- uses `<button role="switch" aria-checked={checked}>`
+- thumb slides on toggle
+- clicking calls `onChange(!checked)`
 
 ---
 
@@ -314,35 +236,44 @@ Renders an accessible toggle switch:
 
 **`tests/Feature/Settings/NotificationPreferencesTest.php`**
 
-Test the `SettingsController` HTTP behavior:
+Test the settings API behavior:
 
-```
-it saves notification preferences for the authenticated agent
-it returns current preferences pre-filled for the authenticated agent
-it creates default preferences on first visit if none exist
-it returns 403 when the triage gate denies access
-it validates that all preference fields must be boolean
-it creates separate preferences per user (one agent saving does not affect another)
-```
+- `it saves notification preferences for the authenticated agent`
+- `it returns current preferences for the authenticated agent`
+- `it creates default preferences on first fetch if none exist`
+- `it returns 403 when the triage gate denies access`
+- `it validates that all preference fields must be boolean`
+- `it creates separate preferences per user`
+
+Assertions should verify JSON payloads and `422` validation responses, not redirects.
 
 ### Unit Tests
 
 **`tests/Unit/Models/AgentPreferenceTest.php`**
 
-```
-it uses the correct table name
-it casts all preference columns to boolean
-it has the expected fillable fields
-```
+- `it uses the correct table name`
+- `it casts all preference columns to boolean`
+- `it has the expected fillable fields`
 
 ---
 
-## - [ ] 10. Architecture Diagram Update
+## - [ ] 10. Frontend Route Update
 
-The Phase 6 frontend architecture diagram should be updated to include the Settings pages. Note this for when you update Phase 6's diagram after implementation:
+Update the Phase 6 frontend route tree so:
+- `/settings` redirects client-side to `/settings/notifications`
+- `/settings/notifications` renders the notification preferences page
+
+This keeps browser URLs aligned with the dashboard information architecture while leaving the server transport minimal.
+
+---
+
+## - [ ] 11. Architecture Diagram Update
+
+The Phase 6 frontend architecture diagram should be updated to include the Settings page and settings API:
 
 ```
 Settings/Notifications → SettingsNav (uses)
 Settings/Notifications → Toggle (uses)
-app_tsx → Settings/Notifications (resolves)
+Settings/Notifications → api/settings/notifications (fetches)
+app.tsx → Settings/Notifications (routes)
 ```
