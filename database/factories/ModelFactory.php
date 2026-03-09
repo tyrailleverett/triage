@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace VendorName\Skeleton\Database\Factories;
+namespace HotReloadStudios\Triage\Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 
