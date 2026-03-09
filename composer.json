@@ -1,17 +1,17 @@
 {
-    "name": "vendor-name/package-skeleton",
-    "description": ":package_description",
+    "name": "hotreloadstudios/triage",
+    "description": "A self-hosted customer support ticketing system for Laravel.",
     "keywords": [
-        ":vendor_name",
         "laravel",
-        ":package_slug"
+        "triage",
+        "support",
+        "tickets"
     ],
-    "homepage": "https://github.com/:vendor_slug/:package_slug",
+    "homepage": "https://github.com/tyrailleverett/triage",
     "license": "MIT",
     "authors": [
         {
-            "name": ":author_name",
-            "email": "author@domain.com",
+            "name": "Hot Reload Studios",
             "role": "Developer"
         }
     ],
@@ -38,13 +38,13 @@
     },
     "autoload": {
         "psr-4": {
-            "VendorName\\Skeleton\\": "src/",
-            "VendorName\\Skeleton\\Database\\Factories\\": "database/factories/"
+            "HotReloadStudios\\Triage\\": "src/",
+            "HotReloadStudios\\Triage\\Database\\Factories\\": "database/factories/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "VendorName\\Skeleton\\Tests\\": "tests/",
+            "HotReloadStudios\\Triage\\Tests\\": "tests/",
             "Workbench\\App\\": "workbench/app/"
         }
     },
@@ -70,10 +70,10 @@
     "extra": {
         "laravel": {
             "providers": [
-                "VendorName\\Skeleton\\SkeletonServiceProvider"
+                "HotReloadStudios\\Triage\\TriageServiceProvider"
             ],
             "aliases": {
-                "Skeleton": "VendorName\\Skeleton\\Facades\\Skeleton"
+                "Triage": "HotReloadStudios\\Triage\\Facades\\Triage"
             }
         }
     },

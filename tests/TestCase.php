@@ -2,24 +2,24 @@
 
 declare(strict_types=1);
 
-namespace VendorName\Skeleton\Tests;
+namespace HotReloadStudios\Triage\Tests;
 
+use HotReloadStudios\Triage\TriageServiceProvider;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Orchestra\Testbench\TestCase as Orchestra;
-use VendorName\Skeleton\SkeletonServiceProvider;
 
-final class TestCase extends Orchestra
+abstract class TestCase extends Orchestra
 {
     protected function setUp(): void
     {
         parent::setUp();
 
         Factory::guessFactoryNamesUsing(
-            fn (string $modelName) => 'VendorName\\Skeleton\\Database\\Factories\\'.class_basename($modelName).'Factory'
+            fn (string $modelName) => 'HotReloadStudios\\Triage\\Database\\Factories\\'.class_basename($modelName).'Factory'
         );
     }
 
-    public function getEnvironmentSetUp($app)
+    final public function getEnvironmentSetUp($app): void
     {
         config()->set('database.default', 'testing');
 
@@ -30,10 +30,10 @@ final class TestCase extends Orchestra
          */
     }
 
-    protected function getPackageProviders($app)
+    protected function getPackageProviders($app): array
     {
         return [
-            SkeletonServiceProvider::class,
+            TriageServiceProvider::class,
         ];
     }
 }
