@@ -6,7 +6,6 @@ namespace HotReloadStudios\Triage;
 
 use HotReloadStudios\Triage\Commands\TriageInstallCommand;
 use Illuminate\Support\Facades\Gate;
-use Spatie\LaravelPackageTools\Commands\InstallCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 
@@ -19,9 +18,7 @@ final class TriageServiceProvider extends PackageServiceProvider
             ->hasConfigFile()
             ->hasViews()
             ->hasRoutes('web')
-            ->hasInstallCommand(function (InstallCommand $command): void {
-                TriageInstallCommand::configure($command);
-            });
+            ->hasCommands([TriageInstallCommand::class]);
     }
 
     public function packageRegistered(): void
