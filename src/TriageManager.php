@@ -8,7 +8,7 @@ use Closure;
 
 final class TriageManager
 {
-    protected ?Closure $authCallback = null;
+    private ?Closure $authCallback = null;
 
     public function auth(Closure $callback): void
     {
