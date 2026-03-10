@@ -37,6 +37,8 @@ final class TriageServiceProvider extends PackageServiceProvider
             $this->package->basePath('/../resources/dist') => public_path('vendor/triage'),
         ], 'triage-assets');
 
-        Gate::define('triage', $this->app->make(TriageManager::class)->resolveAuthCallback());
+        Gate::define('triage', function (mixed $user = null): bool {
+            return ($this->app->make(TriageManager::class)->resolveAuthCallback())($user);
+        });
     }
 }

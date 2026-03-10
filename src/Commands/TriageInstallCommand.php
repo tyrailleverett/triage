@@ -14,11 +14,12 @@ final class TriageInstallCommand
             $command->info('Triage — Installing...');
 
             $command->call('vendor:publish', ['--tag' => 'triage-config']);
-            $command->call('vendor:publish', ['--tag' => 'triage-migrations']);
-            $command->call('migrate');
             $command->call('vendor:publish', ['--tag' => 'triage-assets', '--force' => true]);
 
-            if (config('triage.mailbox_address') === null || config('triage.mailbox_address') === '' || config('triage.reply_to_address') === null || config('triage.reply_to_address') === '') {
+            $mailboxAddress = config('triage.mailbox_address');
+            $replyToAddress = config('triage.reply_to_address');
+
+            if (blank($mailboxAddress) || blank($replyToAddress)) {
                 $command->info('Inbound email remains disabled until mailbox/provider setup is completed and triage.mailbox_address and triage.reply_to_address are configured.');
             }
 

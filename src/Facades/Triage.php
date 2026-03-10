@@ -10,14 +10,11 @@ use Illuminate\Support\Facades\Facade;
 
 /**
  * @see TriageManager
+ *
+ * @method static void auth(Closure $callback)
  */
 final class Triage extends Facade
 {
-    public static function auth(Closure $callback): void
-    {
-        app(TriageManager::class)->auth($callback);
-    }
-
     protected static function getFacadeAccessor(): string
     {
         return TriageManager::class;
