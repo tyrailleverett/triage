@@ -15,6 +15,8 @@ interface NotificationSetting {
     description: string;
 }
 
+type NotificationFieldErrors = Partial<Record<keyof AgentPreferences, string[]>>;
+
 const notificationSettings: NotificationSetting[] = [
     {
         key: 'notify_ticket_assigned',
@@ -54,6 +56,7 @@ export default function Notifications(): React.JSX.Element {
     const [isSaving, setIsSaving] = useState(false);
     const [saveSuccess, setSaveSuccess] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [fieldErrors, setFieldErrors] = useState<NotificationFieldErrors>({});
 
     useEffect(() => {
         const load = async (): Promise<void> => {
@@ -61,6 +64,7 @@ export default function Notifications(): React.JSX.Element {
             try {
                 const data = await api.get<NotificationsResponse>('/settings/notifications');
                 setPreferences(data.data);
+                setFieldErrors({});
             } catch (err) {
                 const apiErr = err as ApiError;
                 setError(apiErr.message ?? 'Failed to load settings.');
@@ -77,6 +81,10 @@ export default function Notifications(): React.JSX.Element {
 
         setPreferences({ ...preferences, [key]: value });
         setSaveSuccess(false);
+        setFieldErrors((currentErrors) => ({
+            ...currentErrors,
+            [key]: undefined,
+        }));
     };
 
     const handleSave = async (): Promise<void> => {
@@ -85,13 +93,21 @@ export default function Notifications(): React.JSX.Element {
         setIsSaving(true);
         setError(null);
         setSaveSuccess(false);
+        setFieldErrors({});
 
         try {
-            await api.patch('/settings/notifications', preferences);
+            const data = await api.patch<NotificationsResponse>('/settings/notifications', preferences);
+            setPreferences(data.data);
             setSaveSuccess(true);
         } catch (err) {
             const apiErr = err as ApiError;
-            setError(apiErr.message ?? 'Failed to save settings.');
+
+            if (apiErr.status === 422) {
+                setError(apiErr.message ?? 'Please correct the highlighted fields.');
+                setFieldErrors((apiErr.errors as NotificationFieldErrors | undefined) ?? {});
+            } else {
+                setError(apiErr.message ?? 'Failed to save settings.');
+            }
         } finally {
             setIsSaving(false);
         }
@@ -150,11 +166,15 @@ export default function Notifications(): React.JSX.Element {
                                         <div>
                                             <p className="text-sm font-medium text-white">{setting.label}</p>
                                             <p className="mt-0.5 text-xs text-gray-500">{setting.description}</p>
+                                            {fieldErrors[setting.key] !== undefined && (
+                                                <p className="mt-2 text-xs text-red-300">{fieldErrors[setting.key]?.[0]}</p>
+                                            )}
                                         </div>
                                         <Toggle
                                             checked={preferences?.[setting.key] ?? false}
                                             onChange={(value) => handleToggle(setting.key, value)}
                                             disabled={isSaving}
+                                            label={setting.label}
                                         />
                                     </div>
                                 ))}
