@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace HotReloadStudios\Triage;
 
 use HotReloadStudios\Triage\Commands\TriageInstallCommand;
+use HotReloadStudios\Triage\Support\ReplyTokenGenerator;
+use HotReloadStudios\Triage\Support\SubmitterResolver;
 use Illuminate\Support\Facades\Gate;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
@@ -28,6 +30,8 @@ final class TriageServiceProvider extends PackageServiceProvider
 
     public function packageRegistered(): void
     {
+        $this->app->singleton(SubmitterResolver::class);
+        $this->app->bind(ReplyTokenGenerator::class);
         $this->app->singleton(TriageManager::class);
     }
 
