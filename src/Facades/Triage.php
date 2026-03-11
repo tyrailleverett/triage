@@ -15,7 +15,10 @@ final class Triage extends Facade
 {
     public static function auth(Closure $callback): void
     {
-        app(TriageManager::class)->auth($callback);
+        /** @var TriageManager $triageManager */
+        $triageManager = self::getFacadeRoot();
+
+        $triageManager->auth($callback);
     }
 
     protected static function getFacadeAccessor(): string

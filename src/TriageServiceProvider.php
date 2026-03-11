@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace HotReloadStudios\Triage;
 
 use HotReloadStudios\Triage\Commands\TriageInstallCommand;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Facades\Gate;
 use Spatie\LaravelPackageTools\Commands\InstallCommand;
 use Spatie\LaravelPackageTools\Package;
@@ -37,6 +38,10 @@ final class TriageServiceProvider extends PackageServiceProvider
             $this->package->basePath('/../resources/dist') => public_path('vendor/triage'),
         ], 'triage-assets');
 
-        Gate::define('triage', $this->app->make(TriageManager::class)->resolveAuthCallback());
+        Gate::define('triage', static function (Authenticatable $user): bool {
+            $callback = app(TriageManager::class)->resolveAuthCallback();
+
+            return $callback($user);
+        });
     }
 }

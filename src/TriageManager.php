@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace HotReloadStudios\Triage;
 
 use Closure;
+use Illuminate\Contracts\Auth\Authenticatable;
 
 final class TriageManager
 {
@@ -17,6 +18,6 @@ final class TriageManager
 
     public function resolveAuthCallback(): Closure
     {
-        return $this->authCallback ?? static fn (mixed $user = null): bool => app()->environment('local', 'testing');
+        return $this->authCallback ?? static fn (Authenticatable $user): bool => app()->environment('local', 'testing');
     }
 }
