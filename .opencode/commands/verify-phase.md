@@ -16,15 +16,17 @@ Follow these steps exactly in order. Do not skip steps.
 
 ### Step 1: Validate Inputs
 
-1. Parse `$ARGUMENTS` — expect two space-separated values: the plan file path and the PR URL or number
-2. Read the plan file, extract the phase number and title from the filename (e.g., `Plan_v1___Phase_2__API_Keys.md` → Phase 2, "API Keys")
-3. Parse all sections by scanning for `## - [ ]` headings — each heading through the next `---` or next heading is one section
-4. Use `gh pr view <PR> --json number,headRefName,headRefOid,url` to confirm the PR exists and is open
-5. Abort with a clear error if:
-   - `$ARGUMENTS` is missing or does not contain two values
-   - The plan file does not exist
-   - The plan file contains no parseable `## - [ ]` sections
+1. Parse `$ARGUMENTS` — expect a single value: the PR URL or number
+2. Run `gh pr view <PR> --json number,headRefName,headRefOid,url,body` to confirm the PR exists and is open
+3. Extract the plan file path from the PR body by finding the line matching `Plan: <path>` (written there by execute-phase)
+4. Read the plan file at that path, extract the phase number and title from the filename (e.g., `Plan_v1___Phase_2__API_Keys.md` → Phase 2, "API Keys")
+5. Parse all sections by scanning for `## - [ ]` headings — each heading through the next `---` or next heading is one section
+6. Abort with a clear error if:
+   - `$ARGUMENTS` is missing
    - The PR does not exist or is closed/merged
+   - The PR body contains no `Plan:` line
+   - The plan file does not exist at the extracted path
+   - The plan file contains no parseable `## - [ ]` sections
 
 ### Step 2: Checkout the PR Branch
 
@@ -64,7 +66,21 @@ After all individual sections are verified, run the **Cross-Section Checks** des
 1. Run Pint in test mode: `vendor/bin/pint --test --format agent`
 2. Record any violations — do **not** auto-fix (this is an audit, not execution)
 
-### Step 6: Generate Report & Post to PR
+### Step 6: Code Review
+
+Perform a thorough code review of all staged and changed files using the guidelines in @.opencode/commands/code-review.md. This includes:
+
+- All PHP and code standards checks
+- Security, performance, and architecture reviews
+- Testing coverage verification
+- Laravel package conventions
+
+Record the verdict:
+- ✅ **Approved** — proceed to Step 7
+- ⚠️ **Approved with suggestions** — proceed to Step 7 (suggestions can be addressed in future iterations)
+- 🚫 **Changes required** — stop and report to the user with specific issues; do not push
+
+### Step 7: Generate Report & Post to PR
 
 Follow @.claude/skills/verify-phase/references/report-format.md for all templates and commands.
 
@@ -79,7 +95,7 @@ Follow @.claude/skills/verify-phase/references/report-format.md for all template
    - PR comment URL
    - Issue URL (if created)
 
-### Step 7: Merge on PASS
+### Step 8: Merge on PASS
 
 If the overall status is **PASS** (no DEVIATION or MISSING findings):
 
