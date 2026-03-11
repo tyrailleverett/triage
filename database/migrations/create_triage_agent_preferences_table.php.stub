@@ -1,0 +1,33 @@
+<?php
+
+declare(strict_types=1);
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('triage_agent_preferences', function (Blueprint $table): void {
+            $table->addColumn('uuid', 'id');
+            $table->string('user_id')->unique();
+            $table->boolean('notify_ticket_assigned')->default(true);
+            $table->boolean('notify_ticket_replied')->default(true);
+            $table->boolean('notify_note_added')->default(false);
+            $table->boolean('notify_status_changed')->default(true);
+            $table->boolean('daily_digest')->default(false);
+            $table->boolean('email_notifications')->default(true);
+            $table->timestamps();
+
+            $table->primary('id');
+            $table->index('user_id');
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('triage_agent_preferences');
+    }
+};

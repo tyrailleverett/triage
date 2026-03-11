@@ -31,6 +31,7 @@ final class TriageServiceProvider extends PackageServiceProvider
                 'create_tickets_table',
                 'create_ticket_messages_table',
                 'create_ticket_notes_table',
+                'create_triage_agent_preferences_table',
             ])
             ->hasCommands([TriageInstallCommand::class]);
     }
