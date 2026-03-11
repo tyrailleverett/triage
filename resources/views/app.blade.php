@@ -3,13 +3,20 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Triage</title>
+        <title>Triage — {{ config('app.name') }}</title>
+        <link rel="stylesheet" href="/vendor/triage/assets/app.css">
     </head>
     <body>
-        <main>
-            <div id="app"></div>
+        <div id="triage-app"></div>
 
-            <p>Triage SPA assets need to be published before the dashboard is available.</p>
-        </main>
+        <script>
+            window.TriageConfig = {
+                dashboardPath: "{{ config('triage.dashboard.path', '/triage') }}",
+                apiBasePath: "{{ config('triage.dashboard.path', '/triage') }}/api",
+                csrfToken: "{{ csrf_token() }}"
+            };
+        </script>
+
+        <script type="module" src="/vendor/triage/assets/app.js"></script>
     </body>
 </html>
