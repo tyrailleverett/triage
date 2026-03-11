@@ -8,7 +8,7 @@ use Closure;
 use HotReloadStudios\Triage\TriageManager;
 
 it('stores an auth callback', function (): void {
-    $manager = new TriageManager();
+    $manager = app(TriageManager::class);
     $callback = static fn (mixed $user = null): bool => true;
 
     $manager->auth($callback);
@@ -17,13 +17,13 @@ it('stores an auth callback', function (): void {
 });
 
 it('returns a default auth callback when none is set', function (): void {
-    $manager = new TriageManager();
+    $manager = app(TriageManager::class);
 
     expect($manager->resolveAuthCallback())->toBeInstanceOf(Closure::class);
 });
 
 it('allows access in local environment by default', function (): void {
-    $manager = new TriageManager();
+    $manager = app(TriageManager::class);
     app()['env'] = 'local';
 
     $callback = $manager->resolveAuthCallback();
@@ -32,7 +32,7 @@ it('allows access in local environment by default', function (): void {
 });
 
 it('denies access in production environment by default', function (): void {
-    $manager = new TriageManager();
+    $manager = app(TriageManager::class);
     app()['env'] = 'production';
 
     $callback = $manager->resolveAuthCallback();
