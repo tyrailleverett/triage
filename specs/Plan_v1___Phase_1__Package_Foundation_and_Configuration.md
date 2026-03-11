@@ -16,7 +16,7 @@ This phase transforms the skeleton into the Triage package shell. Every placehol
 
 ---
 
-## - [ ] 1. Package Rename
+## - [x] 1. Package Rename
 
 Rename all skeleton references to Triage. This touches every file in the project.
 
@@ -90,7 +90,7 @@ After renaming, run `composer dump-autoload` and `composer test` to verify nothi
 
 ---
 
-## - [ ] 2. Configuration File
+## - [x] 2. Configuration File
 
 **`config/triage.php`**
 
@@ -110,7 +110,7 @@ All values are string, array, or null. No closures in config (closures cannot be
 
 ---
 
-## - [ ] 3. Service Provider
+## - [x] 3. Service Provider
 
 **`src/TriageServiceProvider.php`**
 
@@ -136,7 +136,7 @@ The service provider does NOT register middleware globally. Middleware is applie
 
 ---
 
-## - [ ] 4. Facade & TriageManager Shell
+## - [x] 4. Facade & TriageManager Shell
 
 **`src/Facades/Triage.php`**
 
@@ -157,7 +157,7 @@ No other public methods. Phase 3 adds all SDK methods.
 
 ---
 
-## - [ ] 5. Gate / Authorization
+## - [x] 5. Gate / Authorization
 
 Triage uses the same pattern as Laravel Horizon for access control.
 
@@ -178,7 +178,7 @@ The gate is a standard Laravel gate definition; it receives the authenticated `U
 
 ---
 
-## - [ ] 6. Install Command
+## - [x] 6. Install Command
 
 **`src/Commands/TriageInstallCommand.php`**
 
@@ -202,7 +202,7 @@ The command is idempotent: running it multiple times does not create duplicate c
 
 ---
 
-## - [ ] 7. Create Route File Stub
+## - [x] 7. Create Route File Stub
 
 **`routes/web.php`**
 
@@ -212,7 +212,7 @@ The file should be a standard Laravel route file; it does not return a closure. 
 
 ---
 
-## - [ ] 8. Create Empty Asset Directories
+## - [x] 8. Create Empty Asset Directories
 
 Create the directory structure for compiled frontend assets and the Blade shell view:
 
@@ -223,7 +223,7 @@ This ensures the service provider's `hasViews()` and asset publishing work immed
 
 ---
 
-## - [ ] 9. Tests
+## - [x] 9. Tests
 
 ### Unit Tests
 
