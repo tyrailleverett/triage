@@ -4,9 +4,16 @@ declare(strict_types=1);
 
 namespace HotReloadStudios\Triage;
 
+use BeyondCode\Mailbox\Facades\Mailbox;
 use HotReloadStudios\Triage\Commands\TriageInstallCommand;
+use HotReloadStudios\Triage\Events\TicketCreated;
+use HotReloadStudios\Triage\Events\TicketReplied;
+use HotReloadStudios\Triage\Listeners\SendTicketConfirmationListener;
+use HotReloadStudios\Triage\Listeners\SendTicketReplyMailListener;
+use HotReloadStudios\Triage\Mailbox\TriageMailbox;
 use HotReloadStudios\Triage\Support\ReplyTokenGenerator;
 use HotReloadStudios\Triage\Support\SubmitterResolver;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
@@ -44,5 +51,14 @@ final class TriageServiceProvider extends PackageServiceProvider
         ], 'triage-assets');
 
         Gate::define('triage', $this->app->make(TriageManager::class)->resolveAuthCallback());
+
+        Event::listen(TicketCreated::class, SendTicketConfirmationListener::class);
+        Event::listen(TicketReplied::class, SendTicketReplyMailListener::class);
+
+        $mailboxAddress = config('triage.mailbox_address');
+
+        if ($mailboxAddress !== null && class_exists(Mailbox::class)) {
+            Mailbox::to((string) $mailboxAddress, TriageMailbox::class);
+        }
     }
 }
