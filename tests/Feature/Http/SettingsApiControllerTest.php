@@ -23,31 +23,40 @@ beforeEach(function (): void {
     config()->set('triage.user_model', User::class);
 });
 
-it('returns dashboard notification preferences in the expected shape', function (): void {
+it('returns notification preferences in the expected shape', function (): void {
     $user = makeSettingsApiUser();
 
     $this->actingAs($user)
         ->getJson('/triage/api/settings/notifications')
         ->assertSuccessful()
-        ->assertJsonPath('data.notify_on_new_ticket', false)
-        ->assertJsonPath('data.notify_on_reply', false)
-        ->assertJsonPath('data.notify_on_assignment', false)
-        ->assertJsonPath('data.notify_on_status_change', false);
+        ->assertJsonStructure([
+            'data' => [
+                'notify_ticket_assigned',
+                'notify_ticket_replied',
+                'notify_note_added',
+                'notify_status_changed',
+                'daily_digest',
+                'email_notifications',
+            ],
+        ]);
 });
 
-it('echoes validated notification updates for the dashboard client', function (): void {
+it('saves notification updates for the agent', function (): void {
     $user = makeSettingsApiUser('settings-update-agent@example.com');
 
     $this->actingAs($user)
         ->patchJson('/triage/api/settings/notifications', [
-            'notify_on_new_ticket' => true,
-            'notify_on_reply' => true,
+            'notify_ticket_assigned' => true,
+            'notify_ticket_replied' => true,
+            'notify_note_added' => false,
+            'notify_status_changed' => true,
+            'daily_digest' => false,
+            'email_notifications' => true,
         ])
         ->assertSuccessful()
-        ->assertJsonPath('data.notify_on_new_ticket', true)
-        ->assertJsonPath('data.notify_on_reply', true)
-        ->assertJsonPath('data.notify_on_assignment', false)
-        ->assertJsonPath('data.notify_on_status_change', false);
+        ->assertJsonPath('data.notify_ticket_assigned', true)
+        ->assertJsonPath('data.notify_ticket_replied', true)
+        ->assertJsonPath('data.notify_note_added', false);
 });
 
 it('validates notification preference values', function (): void {
@@ -55,10 +64,10 @@ it('validates notification preference values', function (): void {
 
     $this->actingAs($user)
         ->patchJson('/triage/api/settings/notifications', [
-            'notify_on_new_ticket' => 'sometimes',
+            'notify_ticket_assigned' => 'not-valid',
         ])
         ->assertStatus(422)
-        ->assertJsonValidationErrors(['notify_on_new_ticket']);
+        ->assertJsonValidationErrors(['notify_ticket_assigned']);
 });
 
 it('denies access to unauthorized users on notification settings', function (): void {
