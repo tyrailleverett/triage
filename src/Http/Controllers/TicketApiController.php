@@ -72,16 +72,20 @@ final class TicketApiController
     public function store(CreateTicketRequest $request): JsonResponse
     {
         $validated = $request->validated();
+        $authenticatedUser = $request->user();
 
         $priority = isset($validated['priority'])
             ? TicketPriority::from($validated['priority'])
             : TicketPriority::Normal;
 
+        $submitterEmail = $validated['submitter_email'] ?? (string) data_get($authenticatedUser, 'email', '');
+        $submitterName = $validated['submitter_name'] ?? (string) data_get($authenticatedUser, 'name', 'Authenticated User');
+
         $ticket = $this->triage->createTicket(
             subject: $validated['subject'],
             body: $validated['body'],
-            submitterEmail: $validated['submitter_email'],
-            submitterName: $validated['submitter_name'],
+            submitterEmail: $submitterEmail,
+            submitterName: $submitterName,
             priority: $priority,
             assigneeId: $validated['assignee_id'] ?? null,
         );

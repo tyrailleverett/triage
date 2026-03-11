@@ -5,25 +5,31 @@ import ErrorBoundary from './Components/ErrorBoundary';
 import AppRoutes from './routes';
 
 declare global {
-  interface Window {
-    TriageConfig: {
-      dashboardPath: string;
-      apiBasePath: string;
-      csrfToken: string;
-    };
-  }
+    interface Window {
+        TriageConfig: {
+            dashboardPath: string;
+            apiBasePath: string;
+            csrfToken: string;
+            currentAgent?: {
+                id: string;
+                name: string;
+                email: string;
+                role: string;
+            } | null;
+        };
+    }
 }
 
 const rootElement = document.getElementById('triage-app');
 
 if (rootElement) {
-  const basePath = window.TriageConfig?.dashboardPath ?? '/triage';
+    const basePath = window.TriageConfig?.dashboardPath ?? '/triage';
 
-  createRoot(rootElement).render(
-    <ErrorBoundary>
-      <BrowserRouter basename={basePath}>
-        <AppRoutes />
-      </BrowserRouter>
-    </ErrorBoundary>,
-  );
+    createRoot(rootElement).render(
+        <ErrorBoundary>
+            <BrowserRouter basename={basePath}>
+                <AppRoutes />
+            </BrowserRouter>
+        </ErrorBoundary>,
+    );
 }
