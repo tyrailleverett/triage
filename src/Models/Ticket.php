@@ -14,6 +14,17 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @property string $id
+ * @property string $subject
+ * @property TicketStatus $status
+ * @property TicketPriority $priority
+ * @property string|null $submitter_id
+ * @property string $submitter_name
+ * @property string $submitter_email
+ * @property string|null $assignee_id
+ * @property string $reply_token
+ */
 final class Ticket extends Model
 {
     use HasFactory;
