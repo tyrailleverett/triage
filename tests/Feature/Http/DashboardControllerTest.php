@@ -41,6 +41,11 @@ it('returns the dashboard shell for deep links such as tickets and settings', fu
         ->assertViewIs('triage::app');
 
     $this->actingAs($user)
+        ->get('/triage/reports')
+        ->assertSuccessful()
+        ->assertViewIs('triage::app');
+
+    $this->actingAs($user)
         ->get('/triage/settings')
         ->assertSuccessful()
         ->assertViewIs('triage::app');

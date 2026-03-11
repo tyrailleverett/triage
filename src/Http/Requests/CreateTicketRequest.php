@@ -23,8 +23,8 @@ final class CreateTicketRequest extends FormRequest
         return [
             'subject' => ['required', 'string', 'max:255'],
             'body' => ['required', 'string', 'max:10000'],
-            'submitter_email' => ['required', 'email', 'max:255'],
-            'submitter_name' => ['required', 'string', 'max:255'],
+            'submitter_email' => ['sometimes', 'nullable', 'email', 'max:255'],
+            'submitter_name' => ['sometimes', 'nullable', 'string', 'max:255'],
             'priority' => ['sometimes', 'string', Rule::enum(TicketPriority::class)],
             'assignee_id' => ['nullable', 'string', 'max:255'],
         ];

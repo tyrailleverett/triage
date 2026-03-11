@@ -161,13 +161,33 @@ it('creates a ticket with valid data', function (): void {
     $this->assertDatabaseHas('tickets', ['subject' => 'New ticket']);
 });
 
+it('creates a ticket from the dashboard payload without explicit submitter fields', function (): void {
+    $user = makeApiUser('dashboard-store-agent@example.com');
+
+    $this->actingAs($user)
+        ->postJson('/triage/api/tickets', [
+            'subject' => 'Dashboard ticket',
+            'body' => 'Created from the dashboard.',
+            'priority' => 'high',
+        ])
+        ->assertStatus(201)
+        ->assertJsonPath('data.subject', 'Dashboard ticket');
+
+    $this->assertDatabaseHas('tickets', [
+        'subject' => 'Dashboard ticket',
+        'submitter_email' => 'dashboard-store-agent@example.com',
+        'submitter_name' => 'API Agent',
+        'priority' => 'high',
+    ]);
+});
+
 it('validates required fields', function (): void {
     $user = makeApiUser('validation-agent@example.com');
 
     $this->actingAs($user)
         ->postJson('/triage/api/tickets', [])
         ->assertStatus(422)
-        ->assertJsonValidationErrors(['subject', 'body', 'submitter_email', 'submitter_name']);
+        ->assertJsonValidationErrors(['subject', 'body']);
 });
 
 it('validates email format', function (): void {
