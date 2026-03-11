@@ -18,6 +18,11 @@ final class TriageServiceProvider extends PackageServiceProvider
             ->hasConfigFile()
             ->hasViews()
             ->hasRoutes('web')
+            ->hasMigrations([
+                'create_tickets_table',
+                'create_ticket_messages_table',
+                'create_ticket_notes_table',
+            ])
             ->hasCommands([TriageInstallCommand::class]);
     }
 

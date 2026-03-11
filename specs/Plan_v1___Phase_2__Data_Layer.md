@@ -16,7 +16,7 @@ This phase builds the complete data layer. Three enums define the domain vocabul
 
 ---
 
-## - [ ] 1. Enums
+## - [x] 1. Enums
 
 Create three PHP-backed string enums in `src/Enums/`.
 
@@ -56,7 +56,7 @@ All enums use TitleCase case names per project conventions.
 
 ---
 
-## - [ ] 2. Migrations
+## - [x] 2. Migrations
 
 Remove the skeleton migration stub `database/migrations/create_skeleton_table.php.stub`. Create three new migration stubs in `database/migrations/`. These are `.php.stub` files (Spatie convention) — the service provider publishes them with timestamped filenames.
 
@@ -122,7 +122,7 @@ Note: `message_id` has a unique constraint for deduplication. The unique constra
 
 ---
 
-## - [ ] 3. Models
+## - [x] 3. Models
 
 Create three Eloquent models in `src/Models/`. All models are `final`, use `declare(strict_types=1)`, and follow existing Pint conventions.
 
@@ -206,7 +206,7 @@ No casts needed beyond defaults.
 
 ---
 
-## - [ ] 4. Update Service Provider Migrations
+## - [x] 4. Update Service Provider Migrations
 
 Update `TriageServiceProvider::configurePackage()` to register all three migration stubs via `hasMigrations()`:
 
@@ -219,7 +219,7 @@ Remove the old skeleton migration reference (`create_migration_table_name_table`
 
 ---
 
-## - [ ] 5. Factories
+## - [x] 5. Factories
 
 Replace the commented-out `database/factories/ModelFactory.php` with three real factory classes. Each factory uses `fake()` (not `$this->faker`) per modern Pest/Laravel conventions.
 
@@ -298,7 +298,7 @@ No named states needed — notes are simple.
 
 ---
 
-## - [ ] 6. Remove Old Skeleton Files
+## - [x] 6. Remove Old Skeleton Files
 
 Delete files that are no longer needed:
 
@@ -308,7 +308,7 @@ Delete files that are no longer needed:
 
 ---
 
-## - [ ] 7. Tests
+## - [x] 7. Tests
 
 ### Unit Tests
 

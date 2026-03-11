@@ -1,0 +1,39 @@
+<?php
+
+declare(strict_types=1);
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('tickets', function (Blueprint $table): void {
+            $table->addColumn('uuid', 'id');
+            $table->string('subject');
+            $table->string('status')->default('open');
+            $table->string('priority')->default('normal');
+            $table->string('submitter_id')->nullable();
+            $table->string('submitter_name');
+            $table->string('submitter_email');
+            $table->string('assignee_id')->nullable();
+            $table->string('reply_token')->unique();
+            $table->timestamps();
+
+            $table->primary('id');
+            $table->index('status');
+            $table->index('priority');
+            $table->index('assignee_id');
+            $table->index('submitter_id');
+            $table->index('submitter_email');
+            $table->index('created_at');
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('tickets');
+    }
+};
