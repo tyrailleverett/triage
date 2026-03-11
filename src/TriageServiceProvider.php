@@ -28,6 +28,8 @@ final class TriageServiceProvider extends PackageServiceProvider
 
     public function packageRegistered(): void
     {
+        $this->app->singleton(SubmitterResolver::class);
+        $this->app->bind(ReplyTokenGenerator::class);
         $this->app->singleton(TriageManager::class);
     }
 
