@@ -9,8 +9,10 @@ use BeyondCode\Mailbox\InboundEmail;
 use BeyondCode\Mailbox\MailboxServiceProvider;
 use HotReloadStudios\Triage\Jobs\ProcessInboundEmailJob;
 use HotReloadStudios\Triage\Mailbox\TriageMailbox;
+use HotReloadStudios\Triage\TriageServiceProvider;
 use Illuminate\Support\Facades\Bus;
 use Mockery;
+use ReflectionObject;
 
 uses()->beforeEach(function (): void {
     app()->register(MailboxServiceProvider::class);
@@ -19,30 +21,23 @@ uses()->beforeEach(function (): void {
 it('registers the mailbox handler when mailbox_address is configured', function (): void {
     config()->set('triage.mailbox_address', 'support@example.com');
 
-    // Simulate the conditional registration logic from TriageServiceProvider::boot()
-    $mailboxAddress = config('triage.mailbox_address');
+    app()->register(TriageServiceProvider::class, force: true);
 
-    $registered = false;
+    $routes = registeredMailboxRoutes();
 
-    if ($mailboxAddress !== null && class_exists(Mailbox::class)) {
-        $registered = true;
-    }
-
-    expect($registered)->toBeTrue();
+    expect($routes)
+        ->toHaveCount(1)
+        ->and($routes[0]->subject())->toBe('to')
+        ->and($routes[0]->pattern())->toBe('support@example.com')
+        ->and($routes[0]->action())->toBe(TriageMailbox::class);
 });
 
 it('does not register when mailbox_address is null', function (): void {
     config()->set('triage.mailbox_address', null);
 
-    $mailboxAddress = config('triage.mailbox_address');
+    app()->register(TriageServiceProvider::class, force: true);
 
-    $registered = false;
-
-    if ($mailboxAddress !== null && class_exists(Mailbox::class)) {
-        $registered = true;
-    }
-
-    expect($registered)->toBeFalse();
+    expect(registeredMailboxRoutes())->toBeEmpty();
 });
 
 it('does not error when Laravel Mailbox class does not exist', function (): void {
@@ -107,3 +102,18 @@ it('falls back to html body when text body is empty', function (): void {
             && $job->senderName === 'customer@example.com';
     });
 });
+
+function registeredMailboxRoutes(): array
+{
+    $router = Mailbox::getFacadeRoot();
+    $routerReflection = new ReflectionObject($router);
+    $routesProperty = $routerReflection->getProperty('routes');
+    $routesProperty->setAccessible(true);
+
+    $routeCollection = $routesProperty->getValue($router);
+    $routeCollectionReflection = new ReflectionObject($routeCollection);
+    $collectionRoutesProperty = $routeCollectionReflection->getProperty('routes');
+    $collectionRoutesProperty->setAccessible(true);
+
+    return $collectionRoutesProperty->getValue($routeCollection);
+}

@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace HotReloadStudios\Triage;
 
+use BeyondCode\Mailbox\Facades\Mailbox;
 use HotReloadStudios\Triage\Commands\TriageInstallCommand;
 use HotReloadStudios\Triage\Events\TicketCreated;
 use HotReloadStudios\Triage\Events\TicketReplied;
 use HotReloadStudios\Triage\Listeners\SendTicketConfirmationListener;
 use HotReloadStudios\Triage\Listeners\SendTicketReplyMailListener;
+use HotReloadStudios\Triage\Mailbox\TriageMailbox;
 use HotReloadStudios\Triage\Support\ReplyTokenGenerator;
 use HotReloadStudios\Triage\Support\SubmitterResolver;
 use Illuminate\Support\Facades\Event;
