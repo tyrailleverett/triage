@@ -44,5 +44,8 @@ final class TriageServiceProvider extends PackageServiceProvider
         ], 'triage-assets');
 
         Gate::define('triage', $this->app->make(TriageManager::class)->resolveAuthCallback());
+
+        Event::listen(TicketCreated::class, SendTicketConfirmationListener::class);
+        Event::listen(TicketReplied::class, SendTicketReplyMailListener::class);
     }
 }
