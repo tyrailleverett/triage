@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace HotReloadStudios\Triage\Tests\Feature\Http;
 
 use Illuminate\Foundation\Auth\User;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 
 function makeAuthUser(string $email = 'agent@example.com'): User
@@ -53,7 +54,7 @@ it('returns the dashboard shell for deep links such as tickets and settings', fu
 it('denies access to unauthorized users', function (): void {
     $user = makeAuthUser('unauth@example.com');
 
-    \Illuminate\Support\Facades\Gate::define('triage', fn (): bool => false);
+    Gate::define('triage', fn (): bool => false);
 
     $this->actingAs($user)
         ->get('/triage')

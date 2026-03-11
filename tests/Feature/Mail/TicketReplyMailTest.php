@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace HotReloadStudios\Triage\Tests\Feature\Mail;
 
+use HotReloadStudios\Triage\Enums\MessageDirection;
 use HotReloadStudios\Triage\Mail\TicketReplyMail;
 use HotReloadStudios\Triage\Models\Ticket;
 use HotReloadStudios\Triage\TriageManager;
@@ -41,7 +42,7 @@ it('includes the correct reply-to address', function (): void {
     ]);
 
     $message = $ticket->messages()->create([
-        'direction' => \HotReloadStudios\Triage\Enums\MessageDirection::Outbound,
+        'direction' => MessageDirection::Outbound,
         'author_id' => null,
         'body' => 'Agent reply',
         'message_id' => null,

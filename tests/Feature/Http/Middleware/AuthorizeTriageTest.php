@@ -47,16 +47,18 @@ it('denies access to unauthenticated users', function (): void {
         ->assertForbidden();
 });
 
-it('uses the default gate in testing environment', function (): void {
+it('uses the default gate in local environment', function (): void {
     $manager = app(TriageManager::class);
+    app()['env'] = 'local';
+
     $callback = $manager->resolveAuthCallback();
 
     expect($callback())->toBeTrue();
 });
 
-it('uses the custom gate callback when set', function (): void {
+it('uses the default gate in production environment', function (): void {
     $manager = app(TriageManager::class);
-    $manager->auth(fn (): bool => false);
+    app()['env'] = 'production';
 
     $callback = $manager->resolveAuthCallback();
 

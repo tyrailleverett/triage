@@ -4,9 +4,13 @@ declare(strict_types=1);
 
 namespace HotReloadStudios\Triage\Tests\Feature\Jobs;
 
+use HotReloadStudios\Triage\Enums\TicketStatus;
 use HotReloadStudios\Triage\Jobs\ProcessInboundEmailJob;
 use HotReloadStudios\Triage\Models\Ticket;
 use HotReloadStudios\Triage\Models\TicketMessage;
+use HotReloadStudios\Triage\Support\QuotedReplyTrimmer;
+use HotReloadStudios\Triage\Support\ReplyAddressFormatter;
+use HotReloadStudios\Triage\TriageManager;
 use Illuminate\Foundation\Auth\User;
 use Illuminate\Support\Facades\Log;
 
@@ -27,7 +31,7 @@ it('creates a new ticket when no reply token is present', function (): void {
         recipientAddress: 'support@example.com',
     );
 
-    $job->handle(app(\HotReloadStudios\Triage\TriageManager::class), new \HotReloadStudios\Triage\Support\ReplyAddressFormatter, new \HotReloadStudios\Triage\Support\QuotedReplyTrimmer);
+    $job->handle(app(TriageManager::class), new ReplyAddressFormatter, new QuotedReplyTrimmer);
 
     expect(Ticket::where('submitter_email', 'customer@example.com')->exists())->toBeTrue();
 });
@@ -50,7 +54,7 @@ it('appends a message to an existing ticket when reply token matches', function 
         recipientAddress: "support+triage-{$token}@example.com",
     );
 
-    $job->handle(app(\HotReloadStudios\Triage\TriageManager::class), new \HotReloadStudios\Triage\Support\ReplyAddressFormatter, new \HotReloadStudios\Triage\Support\QuotedReplyTrimmer);
+    $job->handle(app(TriageManager::class), new ReplyAddressFormatter, new QuotedReplyTrimmer);
 
     expect($ticket->messages()->count())->toBe(1);
 });
@@ -70,8 +74,8 @@ it('deduplicates by message ID', function (): void {
         recipientAddress: "support+triage-{$token}@example.com",
     );
 
-    $job->handle(app(\HotReloadStudios\Triage\TriageManager::class), new \HotReloadStudios\Triage\Support\ReplyAddressFormatter, new \HotReloadStudios\Triage\Support\QuotedReplyTrimmer);
-    $job->handle(app(\HotReloadStudios\Triage\TriageManager::class), new \HotReloadStudios\Triage\Support\ReplyAddressFormatter, new \HotReloadStudios\Triage\Support\QuotedReplyTrimmer);
+    $job->handle(app(TriageManager::class), new ReplyAddressFormatter, new QuotedReplyTrimmer);
+    $job->handle(app(TriageManager::class), new ReplyAddressFormatter, new QuotedReplyTrimmer);
 
     expect(TicketMessage::where('message_id', '<duplicate-msg@mail.example.com>')->count())->toBe(1);
 });
@@ -87,7 +91,7 @@ it('trims quoted content from the body', function (): void {
         recipientAddress: 'support@example.com',
     );
 
-    $job->handle(app(\HotReloadStudios\Triage\TriageManager::class), new \HotReloadStudios\Triage\Support\ReplyAddressFormatter, new \HotReloadStudios\Triage\Support\QuotedReplyTrimmer);
+    $job->handle(app(TriageManager::class), new ReplyAddressFormatter, new QuotedReplyTrimmer);
 
     $ticket = Ticket::where('submitter_email', 'customer@example.com')->firstOrFail();
     $message = $ticket->messages()->first();
@@ -111,7 +115,7 @@ it('logs a warning for orphaned reply tokens', function (): void {
         recipientAddress: 'support+triage-'.str_repeat('0', 32).'@example.com',
     );
 
-    $job->handle(app(\HotReloadStudios\Triage\TriageManager::class), new \HotReloadStudios\Triage\Support\ReplyAddressFormatter, new \HotReloadStudios\Triage\Support\QuotedReplyTrimmer);
+    $job->handle(app(TriageManager::class), new ReplyAddressFormatter, new QuotedReplyTrimmer);
 
     expect(Ticket::count())->toBe(0);
 });
@@ -134,9 +138,9 @@ it('preserves the existing ticket status on inbound message append', function ()
         recipientAddress: "support+triage-{$token}@example.com",
     );
 
-    $job->handle(app(\HotReloadStudios\Triage\TriageManager::class), new \HotReloadStudios\Triage\Support\ReplyAddressFormatter, new \HotReloadStudios\Triage\Support\QuotedReplyTrimmer);
+    $job->handle(app(TriageManager::class), new ReplyAddressFormatter, new QuotedReplyTrimmer);
 
-    expect($ticket->fresh()->status)->toBe(\HotReloadStudios\Triage\Enums\TicketStatus::Resolved);
+    expect($ticket->fresh()->status)->toBe(TicketStatus::Resolved);
 });
 
 it('stores raw email payload', function (): void {
@@ -156,7 +160,7 @@ it('stores raw email payload', function (): void {
         recipientAddress: "support+triage-{$token}@example.com",
     );
 
-    $job->handle(app(\HotReloadStudios\Triage\TriageManager::class), new \HotReloadStudios\Triage\Support\ReplyAddressFormatter, new \HotReloadStudios\Triage\Support\QuotedReplyTrimmer);
+    $job->handle(app(TriageManager::class), new ReplyAddressFormatter, new QuotedReplyTrimmer);
 
     $message = TicketMessage::where('message_id', '<raw-test@mail.example.com>')->firstOrFail();
 

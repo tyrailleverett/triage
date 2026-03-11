@@ -8,6 +8,7 @@ use HotReloadStudios\Triage\Enums\TicketPriority;
 use HotReloadStudios\Triage\Enums\TicketStatus;
 use HotReloadStudios\Triage\Models\Ticket;
 use Illuminate\Foundation\Auth\User;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 
 function makeApiUser(string $email = 'api-agent@example.com'): User
@@ -99,7 +100,7 @@ it('searches tickets by subject', function (): void {
 
 it('denies access to unauthorized users on index', function (): void {
     $user = makeApiUser('unauth-idx@example.com');
-    \Illuminate\Support\Facades\Gate::define('triage', fn (): bool => false);
+    Gate::define('triage', fn (): bool => false);
 
     $this->actingAs($user)
         ->getJson('/triage/api/tickets')
