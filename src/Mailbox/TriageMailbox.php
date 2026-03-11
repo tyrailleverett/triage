@@ -17,7 +17,7 @@ final class TriageMailbox
         $body = $email->text() ?? (string) $email->html();
 
         $messageId = $email->headerValue('Message-ID');
-        $rawEmail = $email->message;
+        $rawEmail = $email->getAttribute('message');
 
         $recipients = $email->to();
         $recipientAddress = count($recipients) > 0
