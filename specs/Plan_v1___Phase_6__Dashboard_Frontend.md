@@ -323,8 +323,11 @@ flowchart TD
     TicketShow[Tickets/Show]
     TicketCreate[Tickets/Create]
     SettingsNotifications[Settings/Notifications]
+    SettingsNav[SettingsNav]
+    Toggle[Toggle]
     ApiClient[lib/api.ts]
     JsonApi[/triage/api/* JSON endpoints/]
+    SettingsApi[/triage/api/settings/notifications/]
 
     Blade --> App
     App --> Router
@@ -336,6 +339,8 @@ flowchart TD
     TicketsIndex --> ApiClient
     TicketShow --> ApiClient
     TicketCreate --> ApiClient
-    SettingsNotifications --> ApiClient
+    SettingsNotifications --> SettingsNav
+    SettingsNotifications --> Toggle
+    SettingsNotifications --> SettingsApi
     ApiClient --> JsonApi
 ```

@@ -63,8 +63,10 @@ export interface TicketFilters {
 }
 
 export interface AgentPreferences {
-    notify_on_new_ticket: boolean;
-    notify_on_reply: boolean;
-    notify_on_assignment: boolean;
-    notify_on_status_change: boolean;
+    notify_ticket_assigned: boolean;
+    notify_ticket_replied: boolean;
+    notify_note_added: boolean;
+    notify_status_changed: boolean;
+    daily_digest: boolean;
+    email_notifications: boolean;
 }
