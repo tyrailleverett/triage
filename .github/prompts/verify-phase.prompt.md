@@ -65,7 +65,21 @@ After all individual sections are verified, run the **Cross-Section Checks** des
 1. Run Pint in test mode: `vendor/bin/pint --test --format agent`
 2. Record any violations — do **not** auto-fix (this is an audit, not execution)
 
-### Step 6: Generate Report & Post to PR
+### Step 6: Code Review
+
+Perform a thorough code review of all staged and changed files using the guidelines in @.opencode/commands/code-review.md. This includes:
+
+- All PHP and code standards checks
+- Security, performance, and architecture reviews
+- Testing coverage verification
+- Laravel package conventions
+
+Record the verdict:
+- ✅ **Approved** — proceed to Step 7
+- ⚠️ **Approved with suggestions** — proceed to Step 7 (suggestions can be addressed in future iterations)
+- 🚫 **Changes required** — stop and report to the user with specific issues; do not push
+
+### Step 7: Generate Report & Post to PR
 
 Follow @.claude/skills/verify-phase/references/report-format.md for all templates and commands.
 
@@ -80,7 +94,7 @@ Follow @.claude/skills/verify-phase/references/report-format.md for all template
    - PR comment URL
    - Issue URL (if created)
 
-### Step 7: Merge on PASS
+### Step 8: Merge on PASS
 
 If the overall status is **PASS** (no DEVIATION or MISSING findings):
 
