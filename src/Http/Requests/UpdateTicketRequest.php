@@ -29,13 +29,15 @@ final class UpdateTicketRequest extends FormRequest
         ];
     }
 
-    public function after(Validator $validator): void
+    public function withValidator(Validator $validator): void
     {
-        $keys = ['status', 'priority', 'assignee_id'];
-        $hasAtLeastOne = collect($keys)->contains(fn (string $key): bool => $this->has($key));
+        $validator->after(function (Validator $validator): void {
+            $keys = ['status', 'priority', 'assignee_id'];
+            $hasAtLeastOne = collect($keys)->contains(fn (string $key): bool => $this->has($key));
 
-        if (! $hasAtLeastOne) {
-            $validator->errors()->add('general', 'At least one of status, priority, or assignee_id must be provided.');
-        }
+            if (! $hasAtLeastOne) {
+                $validator->errors()->add('general', 'At least one of status, priority, or assignee_id must be provided.');
+            }
+        });
     }
 }

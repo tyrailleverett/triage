@@ -29,7 +29,7 @@ Route::group([
 
     // Shell routes — must come after API routes to avoid catching api/* paths
     Route::get('/', DashboardController::class)->name('dashboard');
-    Route::get('/{view}', DashboardController::class)
+    Route::get('{view}', DashboardController::class)
         ->where('view', '^(?!api/).*$')
         ->name('dashboard.catchall');
 });
