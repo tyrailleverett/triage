@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { api } from '../../lib/api';
-import type { ApiError } from '../../lib/api';
-import type { PaginatedResponse, Ticket, TicketFilters, TicketPriority, TicketStatus } from '../../types';
-import Pagination from '../../Components/Pagination';
-import TicketTable from '../../Components/TicketTable';
+import { api } from '@/lib/api';
+import type { ApiError } from '@/lib/api';
+import type { PaginatedResponse, Ticket, TicketFilters, TicketPriority, TicketStatus } from '@/types';
+import Pagination from '@/Components/Pagination';
+import TicketTable from '@/Components/TicketTable';
 
 export default function TicketsIndex(): React.JSX.Element {
     const [searchParams, setSearchParams] = useSearchParams();

@@ -1,4 +1,4 @@
-import type { Ticket, TicketPriority, TicketStatus } from '../types';
+import type { Ticket, TicketPriority, TicketStatus } from '@/types';
 
 interface TicketMetaPanelProps {
     ticket: Ticket;

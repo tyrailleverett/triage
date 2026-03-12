@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { api } from '../../lib/api';
-import type { ApiError } from '../../lib/api';
-import type { Ticket, TicketMessage, TicketNote, TicketPriority, TicketStatus } from '../../types';
-import Badge from '../../Components/Badge';
-import MessageComposer from '../../Components/MessageComposer';
-import TicketMetaPanel from '../../Components/TicketMetaPanel';
+import { api } from '@/lib/api';
+import type { ApiError } from '@/lib/api';
+import type { Ticket, TicketMessage, TicketNote, TicketPriority, TicketStatus } from '@/types';
+import Badge from '@/Components/Badge';
+import MessageComposer from '@/Components/MessageComposer';
+import TicketMetaPanel from '@/Components/TicketMetaPanel';
 
 interface TicketDetailResponse {
     data: Ticket & {

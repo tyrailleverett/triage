@@ -1,4 +1,4 @@
-import type { TicketPriority, TicketStatus } from '../types';
+import type { TicketPriority, TicketStatus } from '@/types';
 
 interface StatusBadgeProps {
     type: 'status';

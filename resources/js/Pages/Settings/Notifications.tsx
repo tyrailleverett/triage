@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { api } from '../../lib/api';
-import type { ApiError } from '../../lib/api';
-import type { AgentPreferences } from '../../types';
-import SettingsNav from '../../Components/SettingsNav';
-import Toggle from '../../Components/Toggle';
+import { api } from '@/lib/api';
+import type { ApiError } from '@/lib/api';
+import type { AgentPreferences } from '@/types';
+import SettingsNav from '@/Components/SettingsNav';
+import Toggle from '@/Components/Toggle';
 
 interface NotificationsResponse {
     data: AgentPreferences;

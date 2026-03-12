@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { api } from '../../lib/api';
-import type { ApiError } from '../../lib/api';
-import type { Ticket, TicketPriority } from '../../types';
+import { api } from '@/lib/api';
+import type { ApiError } from '@/lib/api';
+import type { Ticket, TicketPriority } from '@/types';
 
 interface CreateTicketResponse {
     data: Ticket;

@@ -1,8 +1,8 @@
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import '../css/app.css';
-import ErrorBoundary from './Components/ErrorBoundary';
-import AppRoutes from './routes';
+import ErrorBoundary from '@/Components/ErrorBoundary';
+import AppRoutes from '@/routes';
 
 declare global {
     interface Window {

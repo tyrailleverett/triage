@@ -1,10 +1,10 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
-import TriageLayout from './Layouts/TriageLayout';
-import TicketsIndex from './Pages/Tickets/Index';
-import TicketShow from './Pages/Tickets/Show';
-import TicketCreate from './Pages/Tickets/Create';
-import Reports from './Pages/Reports';
-import Notifications from './Pages/Settings/Notifications';
+import TriageLayout from '@/Layouts/TriageLayout';
+import TicketsIndex from '@/Pages/Tickets/Index';
+import TicketShow from '@/Pages/Tickets/Show';
+import TicketCreate from '@/Pages/Tickets/Create';
+import Reports from '@/Pages/Reports';
+import Notifications from '@/Pages/Settings/Notifications';
 
 export default function AppRoutes(): React.JSX.Element {
   return (

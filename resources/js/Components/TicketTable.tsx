@@ -1,5 +1,5 @@
-import type { Ticket } from '../types';
-import Badge from './Badge';
+import type { Ticket } from '@/types';
+import Badge from '@/Components/Badge';
 
 interface TicketTableProps {
     tickets: Ticket[];
