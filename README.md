@@ -12,41 +12,23 @@ Triage ships with a pre-compiled React SPA (Horizon-style), a fluent SDK for pro
 
 - PHP 8.4+
 - Laravel 11.x or 12.x
-- PostgreSQL (primary target)
+- PostgreSQL (primary supported database)
+- A queue driver configured (database, Redis, etc.)
 
-## Installation
+## Getting started
 
-Install the package via Composer:
+### 1. Install
 
 ```bash
 composer require hotreloadstudios/triage
-```
-
-Run the install command to publish config, run migrations, and publish compiled assets:
-
-```bash
 php artisan triage:install
 ```
 
-## Configuration
+The install command publishes your config, runs all four migrations, and publishes the pre-compiled dashboard assets to `public/vendor/triage/`.
 
-The install command publishes `config/triage.php`. The available options:
+### 2. Authorize access
 
-```php
-return [
-    'path' => 'triage',                          // URL prefix for the dashboard
-    'middleware' => ['web'],                      // Middleware applied to dashboard routes
-    'mailbox_address' => null,                   // Inbound email address (Laravel Mailbox)
-    'reply_to_address' => null,                  // Reply-to base address for thread token routing
-    'from_name' => env('APP_NAME'),              // Sender name for outbound ticket emails
-    'from_address' => env('MAIL_FROM_ADDRESS'),  // Sender address for outbound ticket emails
-    'user_model' => App\Models\User::class,      // Host app's User model
-];
-```
-
-## Gated Access
-
-All `/triage/*` routes are protected by a named gate. By default, access is denied in production and allowed in `local`/`testing` environments. Register an authorization callback in your `AppServiceProvider`:
+By default, the dashboard denies all access in production. Register an authorization callback in `AppServiceProvider::boot()`:
 
 ```php
 use HotReloadStudios\Triage\Facades\Triage;
@@ -54,9 +36,15 @@ use HotReloadStudios\Triage\Facades\Triage;
 Triage::auth(fn (User $user): bool => $user->isAdmin());
 ```
 
-## SDK Usage
+### 3. Open the dashboard
 
-The `Triage` facade provides the full SDK. Every dashboard action is also available programmatically:
+Navigate to `/triage`. You're in.
+
+---
+
+## SDK
+
+Every dashboard action is available programmatically through the `Triage` facade:
 
 ```php
 use HotReloadStudios\Triage\Facades\Triage;
@@ -85,40 +73,25 @@ Triage::resolveTicket(ticket: $ticket);
 Triage::closeTicket(ticket: $ticket);
 ```
 
-All SDK methods dispatch Laravel events (`TicketCreated`, `TicketReplied`, `TicketResolved`, etc.) for extensibility.
+All SDK methods dispatch Laravel events. See [Events](docs/events.md) for the full list.
 
-## Inbound Email
+---
 
-Triage uses [Laravel Mailbox](https://github.com/beyondcode/laravel-mailbox) to handle inbound email. After installing and configuring Laravel Mailbox for your mail provider (Mailgun, Postmark, SendGrid, etc.), Triage automatically:
+## Documentation
 
-- Creates a new ticket when an unrecognized email arrives
-- Appends replies to the correct ticket thread using a reply-to token
-- Matches submitters to host app `User` records by email address
-- Stores guests (unmatched emails) as plain name/email without a user record
-- Deduplicates inbound deliveries using the `Message-ID` header
-
-## Dashboard
-
-The dashboard is a pre-compiled React SPA served from a package-owned Blade shell and backed by package JSON endpoints under the `/triage` route group. No frontend build toolchain is needed in the host application.
-
-**Features:**
-- Ticket list with filters (status, priority, assignee) and search
-- Full ticket thread with messages and internal notes (visually distinct)
-- Reply and internal note forms
-- Manual ticket creation
-- Metadata sidebar (status, priority, assignee)
-
-## Events
-
-| Event | Fired when |
+| Guide | Description |
 |---|---|
-| `TicketCreated` | A new ticket is created via any path |
-| `TicketReplied` | An agent sends a reply |
-| `TicketMessageReceived` | An inbound customer message is added |
-| `TicketNoteAdded` | An internal note is added |
-| `TicketUpdated` | Status, priority, or assignee changes |
-| `TicketResolved` | Ticket moved to Resolved |
-| `TicketClosed` | Ticket moved to Closed |
+| [Installation](docs/installation.md) | Full install walkthrough, manual publishing, upgrading |
+| [Configuration](docs/configuration.md) | All `config/triage.php` options explained |
+| [Authorization](docs/authorization.md) | Gated access, auth callbacks, middleware |
+| [SDK Reference](docs/sdk.md) | All `Triage` facade methods with examples |
+| [Events](docs/events.md) | Full event reference and listener examples |
+| [Inbound Email](docs/inbound-email.md) | Laravel Mailbox setup, provider config, reply threading |
+| [Dashboard](docs/dashboard.md) | Features, deep linking, asset publishing |
+| [Notification Preferences](docs/notification-preferences.md) | Per-agent notification settings |
+| [Data Model](docs/data-model.md) | Tables, columns, indexes, Eloquent models and scopes |
+
+---
 
 ## Testing
 
