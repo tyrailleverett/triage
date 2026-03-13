@@ -1,8 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ChevronLeft, Plus } from 'lucide-react';
 import { api } from '@/lib/api';
 import type { ApiError } from '@/lib/api';
 import type { Ticket, TicketPriority } from '@/types';
+import { Button } from '@/Components/ui/button';
+import { Input } from '@/Components/ui/input';
 
 interface CreateTicketResponse {
     data: Ticket;
@@ -33,6 +36,7 @@ export default function TicketCreate(): React.JSX.Element {
             navigate(`/tickets/${response.data.id}`);
         } catch (err) {
             const apiErr = err as ApiError;
+
             if (apiErr.status === 422 && apiErr.errors) {
                 setValidationErrors(apiErr.errors);
             } else {
@@ -54,85 +58,100 @@ export default function TicketCreate(): React.JSX.Element {
     ];
 
     return (
-        <div className="mx-auto max-w-2xl p-6">
-            <h1 className="mb-6 text-xl font-semibold text-white">New Ticket</h1>
+        <div className="flex h-full flex-col">
+            {/* Page header */}
+            <div className="border-b border-border px-6 py-4">
+                <button
+                    type="button"
+                    onClick={() => navigate('/tickets')}
+                    className="mb-1 inline-flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
+                >
+                    <ChevronLeft className="h-3 w-3" />
+                    All Tickets
+                </button>
+                <h1 className="text-xl font-semibold text-foreground">New Ticket</h1>
+            </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-                {error !== null && (
-                    <div className="rounded-md bg-red-900/50 px-4 py-3 text-sm text-red-300">
-                        {error}
-                    </div>
-                )}
+            <div className="flex-1 overflow-auto p-6">
+                <div className="mx-auto max-w-2xl">
+                    <form onSubmit={handleSubmit} className="space-y-5">
+                        {error !== null && (
+                            <div className="rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                                {error}
+                            </div>
+                        )}
 
-                <div>
-                    <label htmlFor="subject" className="mb-1 block text-sm font-medium text-gray-300">
-                        Subject
-                    </label>
-                    <input
-                        id="subject"
-                        type="text"
-                        value={subject}
-                        onChange={(e) => setSubject(e.target.value)}
-                        className="w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                        placeholder="Enter ticket subject"
-                    />
-                    {fieldError('subject') !== null && (
-                        <p className="mt-1 text-xs text-red-400">{fieldError('subject')}</p>
-                    )}
+                        <div>
+                            <label htmlFor="subject" className="mb-1.5 block text-sm font-medium text-foreground">
+                                Subject
+                            </label>
+                            <Input
+                                id="subject"
+                                type="text"
+                                value={subject}
+                                onChange={(e) => setSubject(e.target.value)}
+                                placeholder="Enter ticket subject"
+                            />
+                            {fieldError('subject') !== null && (
+                                <p className="mt-1.5 text-xs text-destructive">{fieldError('subject')}</p>
+                            )}
+                        </div>
+
+                        <div>
+                            <label htmlFor="body" className="mb-1.5 block text-sm font-medium text-foreground">
+                                Description
+                            </label>
+                            <textarea
+                                id="body"
+                                value={body}
+                                onChange={(e) => setBody(e.target.value)}
+                                rows={6}
+                                className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                                placeholder="Describe the issue…"
+                            />
+                            {fieldError('body') !== null && (
+                                <p className="mt-1.5 text-xs text-destructive">{fieldError('body')}</p>
+                            )}
+                        </div>
+
+                        <div>
+                            <label htmlFor="priority" className="mb-1.5 block text-sm font-medium text-foreground">
+                                Priority
+                            </label>
+                            <select
+                                id="priority"
+                                value={priority}
+                                onChange={(e) => setPriority(e.target.value as TicketPriority)}
+                                className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                            >
+                                {priorityOptions.map((opt) => (
+                                    <option key={opt.value} value={opt.value}>
+                                        {opt.label}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div className="flex items-center justify-end gap-3 pt-2">
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                onClick={() => navigate('/tickets')}
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                type="submit"
+                                disabled={isSubmitting}
+                                className="gap-1.5"
+                            >
+                                <Plus className="h-4 w-4" />
+                                {isSubmitting ? 'Creating…' : 'Create Ticket'}
+                            </Button>
+                        </div>
+                    </form>
                 </div>
-
-                <div>
-                    <label htmlFor="body" className="mb-1 block text-sm font-medium text-gray-300">
-                        Description
-                    </label>
-                    <textarea
-                        id="body"
-                        value={body}
-                        onChange={(e) => setBody(e.target.value)}
-                        rows={6}
-                        className="w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                        placeholder="Describe the issue…"
-                    />
-                    {fieldError('body') !== null && (
-                        <p className="mt-1 text-xs text-red-400">{fieldError('body')}</p>
-                    )}
-                </div>
-
-                <div>
-                    <label htmlFor="priority" className="mb-1 block text-sm font-medium text-gray-300">
-                        Priority
-                    </label>
-                    <select
-                        id="priority"
-                        value={priority}
-                        onChange={(e) => setPriority(e.target.value as TicketPriority)}
-                        className="w-full rounded-md border border-white/10 bg-[#111318] px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                    >
-                        {priorityOptions.map((opt) => (
-                            <option key={opt.value} value={opt.value}>
-                                {opt.label}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-
-                <div className="flex items-center justify-end gap-3 pt-2">
-                    <button
-                        type="button"
-                        onClick={() => navigate('/tickets')}
-                        className="rounded-md px-3 py-2 text-sm font-medium text-gray-400 hover:text-white"
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        type="submit"
-                        disabled={isSubmitting}
-                        className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-50"
-                    >
-                        {isSubmitting ? 'Creating…' : 'Create Ticket'}
-                    </button>
-                </div>
-            </form>
+            </div>
         </div>
     );
 }

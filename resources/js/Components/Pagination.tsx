@@ -1,3 +1,5 @@
+import { Button } from '@/Components/ui/button';
+
 interface PaginationProps {
     currentPage: number;
     lastPage: number;
@@ -11,24 +13,26 @@ export default function Pagination({ currentPage, lastPage, onPageChange }: Pagi
 
     return (
         <div className="flex items-center justify-between">
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-muted-foreground">
                 Page {currentPage} of {lastPage}
             </p>
             <div className="flex items-center gap-2">
-                <button
+                <Button
+                    variant="outline"
+                    size="sm"
                     onClick={() => onPageChange(currentPage - 1)}
                     disabled={currentPage <= 1}
-                    className="rounded-md border border-white/10 px-3 py-1.5 text-xs font-medium text-gray-400 transition-colors hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
                 >
                     Previous
-                </button>
-                <button
+                </Button>
+                <Button
+                    variant="outline"
+                    size="sm"
                     onClick={() => onPageChange(currentPage + 1)}
                     disabled={currentPage >= lastPage}
-                    className="rounded-md border border-white/10 px-3 py-1.5 text-xs font-medium text-gray-400 transition-colors hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
                 >
                     Next
-                </button>
+                </Button>
             </div>
         </div>
     );

@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
+import { Save } from 'lucide-react';
 import { api } from '@/lib/api';
 import type { ApiError } from '@/lib/api';
 import type { AgentPreferences } from '@/types';
 import SettingsNav from '@/Components/SettingsNav';
-import Toggle from '@/Components/Toggle';
+import { Button } from '@/Components/ui/button';
+import { Switch } from '@/Components/ui/switch';
 
 interface NotificationsResponse {
     data: AgentPreferences;
@@ -61,6 +63,7 @@ export default function Notifications(): React.JSX.Element {
     useEffect(() => {
         const load = async (): Promise<void> => {
             setIsLoading(true);
+
             try {
                 const data = await api.get<NotificationsResponse>('/settings/notifications');
                 setPreferences(data.data);
@@ -114,64 +117,68 @@ export default function Notifications(): React.JSX.Element {
     };
 
     return (
-            <div className="flex h-full flex-col">
-                <div className="flex flex-col gap-3 border-b border-white/10 px-4 py-4 md:flex-row md:items-center md:justify-between md:px-6">
-                    <div>
-                        <h1 className="text-xl font-semibold text-white">Settings</h1>
-                        <p className="mt-0.5 text-sm text-gray-400">
+        <div className="flex h-full flex-col">
+            {/* Page header */}
+            <div className="flex items-center justify-between border-b border-border px-6 py-4">
+                <div>
+                    <h1 className="text-xl font-semibold text-foreground">Settings</h1>
+                    <p className="mt-0.5 text-sm text-muted-foreground">
                         Manage your account and workspace preferences
                     </p>
                 </div>
-                <button
-                    type="button"
+                <Button
                     onClick={() => void handleSave()}
                     disabled={isSaving || isLoading}
-                    className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="gap-1.5"
                 >
+                    <Save className="h-4 w-4" />
                     {isSaving ? 'Saving…' : 'Save Changes'}
-                </button>
+                </Button>
             </div>
 
             {saveSuccess && (
-                <div className="mx-6 mt-4 rounded-md bg-green-900/50 px-4 py-3 text-sm text-green-300">
+                <div className="mx-6 mt-4 rounded-md border border-green-800/50 bg-green-950/50 px-4 py-3 text-sm text-green-400">
                     Preferences saved.
                 </div>
             )}
 
             {error !== null && (
-                <div className="mx-6 mt-4 rounded-md bg-red-900/50 px-4 py-3 text-sm text-red-300">
+                <div className="mx-6 mt-4 rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
                     {error}
                 </div>
             )}
 
-                <div className="flex flex-1 flex-col overflow-hidden md:flex-row">
-                    <SettingsNav active="notifications" />
+            <div className="flex flex-1 flex-col overflow-hidden md:flex-row">
+                <SettingsNav active="notifications" />
 
-                    <div className="flex-1 overflow-y-auto p-4 md:p-6">
-                        {isLoading ? (
-                            <div className="flex h-40 items-center justify-center text-gray-500">
-                                Loading…
+                <div className="flex-1 overflow-y-auto p-6">
+                    {isLoading ? (
+                        <div className="flex h-40 items-center justify-center text-muted-foreground">
+                            Loading…
                         </div>
                     ) : (
-                        <div className="rounded-lg border border-white/10 bg-white/5">
-                            <div className="border-b border-white/10 px-5 py-4">
-                                <h2 className="text-base font-semibold text-white">Notification Preferences</h2>
+                        <div className="rounded-lg border border-border bg-card">
+                            <div className="border-b border-border px-5 py-4">
+                                <h2 className="text-base font-semibold text-foreground">Notification Preferences</h2>
                             </div>
-                            <div className="divide-y divide-white/5">
+                            <div className="divide-y divide-border">
                                 {notificationSettings.map((setting) => (
-                                    <div key={setting.key} className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-                                        <div>
-                                            <p className="text-sm font-medium text-white">{setting.label}</p>
-                                            <p className="mt-0.5 text-xs text-gray-500">{setting.description}</p>
+                                    <div
+                                        key={setting.key}
+                                        className="flex items-center justify-between px-5 py-4"
+                                    >
+                                        <div className="flex-1 pr-6">
+                                            <p className="text-sm font-medium text-foreground">{setting.label}</p>
+                                            <p className="mt-0.5 text-xs text-muted-foreground">{setting.description}</p>
                                             {fieldErrors[setting.key] !== undefined && (
-                                                <p className="mt-2 text-xs text-red-300">{fieldErrors[setting.key]?.[0]}</p>
+                                                <p className="mt-1.5 text-xs text-destructive">{fieldErrors[setting.key]?.[0]}</p>
                                             )}
                                         </div>
-                                        <Toggle
+                                        <Switch
                                             checked={preferences?.[setting.key] ?? false}
-                                            onChange={(value) => handleToggle(setting.key, value)}
+                                            onCheckedChange={(value) => handleToggle(setting.key, value)}
                                             disabled={isSaving}
-                                            label={setting.label}
+                                            aria-label={setting.label}
                                         />
                                     </div>
                                 ))}

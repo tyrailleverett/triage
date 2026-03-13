@@ -1,29 +1,36 @@
 import { useState } from 'react';
+import { FileText, Send } from 'lucide-react';
 import type { ApiError } from '@/lib/api';
+import { Button } from '@/Components/ui/button';
+import { cn } from '@/lib/utils';
 
 interface MessageComposerProps {
-    label: string;
-    variant?: 'reply' | 'note';
-    onSubmit: (body: string) => Promise<void>;
+    onReplySubmit: (body: string) => Promise<void>;
+    onNoteSubmit: (body: string) => Promise<void>;
 }
 
-export default function MessageComposer({ label, variant = 'reply', onSubmit }: MessageComposerProps): React.JSX.Element {
+type ActiveTab = 'reply' | 'note';
+
+export default function MessageComposer({ onReplySubmit, onNoteSubmit }: MessageComposerProps): React.JSX.Element {
+    const [activeTab, setActiveTab] = useState<ActiveTab>('reply');
     const [body, setBody] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [isOpen, setIsOpen] = useState(false);
 
-    const handleSubmit = async (e: React.FormEvent): Promise<void> => {
-        e.preventDefault();
+    const handleSubmit = async (): Promise<void> => {
         if (body.trim() === '') { return; }
 
         setIsSubmitting(true);
         setError(null);
 
         try {
-            await onSubmit(body.trim());
+            if (activeTab === 'reply') {
+                await onReplySubmit(body.trim());
+            } else {
+                await onNoteSubmit(body.trim());
+            }
+
             setBody('');
-            setIsOpen(false);
         } catch (err) {
             const apiErr = err as ApiError;
             setError(apiErr.message ?? 'Failed to submit.');
@@ -32,56 +39,76 @@ export default function MessageComposer({ label, variant = 'reply', onSubmit }: 
         }
     };
 
-    if (!isOpen) {
-        return (
-            <button
-                onClick={() => setIsOpen(true)}
-                className={[
-                    'text-xs font-medium transition-colors',
-                    variant === 'note'
-                        ? 'text-yellow-500 hover:text-yellow-400'
-                        : 'text-indigo-400 hover:text-indigo-300',
-                ].join(' ')}
-            >
-                + {label}
-            </button>
-        );
-    }
-
     return (
-        <form onSubmit={handleSubmit} className="space-y-2">
-            <textarea
-                value={body}
-                onChange={(e) => setBody(e.target.value)}
-                rows={3}
-                autoFocus
-                placeholder={variant === 'note' ? 'Add an internal note…' : 'Write a reply…'}
-                className={[
-                    'w-full rounded-md border px-3 py-2 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:ring-1',
-                    variant === 'note'
-                        ? 'border-yellow-800/50 bg-yellow-900/20 focus:ring-yellow-500'
-                        : 'border-white/10 bg-white/5 focus:ring-indigo-500',
-                ].join(' ')}
-            />
-            {error !== null && (
-                <p className="text-xs text-red-400">{error}</p>
-            )}
-            <div className="flex items-center gap-2">
+        <div className="rounded-lg border border-border bg-card">
+            {/* Tabs */}
+            <div className="flex border-b border-border">
                 <button
-                    type="submit"
-                    disabled={isSubmitting || body.trim() === ''}
-                    className="rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-500 disabled:opacity-50"
+                    type="button"
+                    onClick={() => setActiveTab('reply')}
+                    className={cn(
+                        'flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors',
+                        activeTab === 'reply'
+                            ? 'border-b-2 border-primary text-foreground'
+                            : 'text-muted-foreground hover:text-foreground',
+                    )}
                 >
-                    {isSubmitting ? 'Sending…' : label}
+                    <Send className="h-3.5 w-3.5" />
+                    Reply
                 </button>
                 <button
                     type="button"
-                    onClick={() => { setIsOpen(false); setBody(''); setError(null); }}
-                    className="text-xs text-gray-500 hover:text-gray-300"
+                    onClick={() => setActiveTab('note')}
+                    className={cn(
+                        'flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors',
+                        activeTab === 'note'
+                            ? 'border-b-2 border-yellow-500 text-foreground'
+                            : 'text-muted-foreground hover:text-foreground',
+                    )}
                 >
-                    Cancel
+                    <FileText className="h-3.5 w-3.5" />
+                    Internal Note
                 </button>
             </div>
-        </form>
+
+            {/* Textarea */}
+            <textarea
+                value={body}
+                onChange={(e) => setBody(e.target.value)}
+                rows={4}
+                placeholder={
+                    activeTab === 'reply'
+                        ? 'Write a reply to the customer…'
+                        : 'Add an internal note…'
+                }
+                className={cn(
+                    'w-full resize-none bg-transparent px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none',
+                    activeTab === 'note' && 'text-yellow-300 placeholder:text-yellow-900',
+                )}
+            />
+
+            {error !== null && (
+                <p className="px-4 pb-2 text-xs text-destructive">{error}</p>
+            )}
+
+            {/* Footer */}
+            <div className="flex items-center justify-between border-t border-border px-4 py-2.5">
+                <p className="text-xs text-muted-foreground">
+                    {activeTab === 'reply' ? 'This will be sent to the customer' : 'Only visible to agents'}
+                </p>
+                <Button
+                    onClick={() => void handleSubmit()}
+                    disabled={isSubmitting || body.trim() === ''}
+                    size="sm"
+                    className={cn(
+                        'gap-1.5',
+                        activeTab === 'note' && 'bg-yellow-600 hover:bg-yellow-500 text-white',
+                    )}
+                >
+                    <Send className="h-3.5 w-3.5" />
+                    {isSubmitting ? 'Sending…' : activeTab === 'reply' ? 'Send Reply' : 'Add Note'}
+                </Button>
+            </div>
+        </div>
     );
 }

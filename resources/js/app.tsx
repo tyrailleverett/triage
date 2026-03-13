@@ -25,6 +25,8 @@ const rootElement = document.getElementById('triage-app');
 if (rootElement) {
     const basePath = window.TriageConfig?.dashboardPath ?? '/triage';
 
+    rootElement.classList.add('dark');
+
     createRoot(rootElement).render(
         <ErrorBoundary>
             <BrowserRouter basename={basePath}>
