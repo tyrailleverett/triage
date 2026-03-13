@@ -21,6 +21,6 @@ final class TicketNoteApiController
             agent: $request->user(),
         );
 
-        return response()->json(['data' => $note], 201);
+        return response()->json(['data' => $note->load('author')], 201);
     }
 }

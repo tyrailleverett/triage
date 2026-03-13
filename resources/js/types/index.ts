@@ -5,16 +5,20 @@ export type TicketPriority = 'low' | 'normal' | 'high' | 'urgent';
 export type MessageDirection = 'inbound' | 'outbound';
 
 export interface User {
-    id: number;
+    id: string;
     name: string;
     email: string;
 }
 
 export interface Ticket {
-    id: number;
+    id: string;
     subject: string;
     status: TicketStatus;
     priority: TicketPriority;
+    submitter_id: string | null;
+    submitter_name: string;
+    submitter_email: string;
+    assignee_id: string | null;
     submitter: User | null;
     assignee: User | null;
     created_at: string;
@@ -22,8 +26,8 @@ export interface Ticket {
 }
 
 export interface TicketMessage {
-    id: number;
-    ticket_id: number;
+    id: string;
+    ticket_id: string;
     body: string;
     direction: MessageDirection;
     author: User | null;
@@ -31,8 +35,8 @@ export interface TicketMessage {
 }
 
 export interface TicketNote {
-    id: number;
-    ticket_id: number;
+    id: string;
+    ticket_id: string;
     body: string;
     author: User | null;
     created_at: string;

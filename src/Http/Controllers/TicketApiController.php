@@ -19,7 +19,7 @@ final class TicketApiController
 
     public function index(Request $request): JsonResponse
     {
-        $query = Ticket::query();
+        $query = Ticket::query()->with(['submitter', 'assignee']);
 
         if ($request->filled('status')) {
             $query->where('status', $request->string('status')->value());
@@ -60,8 +60,8 @@ final class TicketApiController
     public function show(Ticket $ticket): JsonResponse
     {
         $ticket->load([
-            'messages' => fn ($q) => $q->orderBy('created_at'),
-            'notes' => fn ($q) => $q->orderBy('created_at'),
+            'messages' => fn ($q) => $q->with('author')->orderBy('created_at'),
+            'notes' => fn ($q) => $q->with('author')->orderBy('created_at'),
             'submitter',
             'assignee',
         ]);

@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Triage — {{ config('app.name') }}</title>
-    <link rel="stylesheet" href="/vendor/triage/assets/app.css">
+    <link rel="stylesheet" href="{{ asset('vendor/triage/assets/app.css') }}">
 </head>
 
 <body>
@@ -32,7 +32,7 @@
         window.TriageConfig = {!! json_encode($triageConfig, JSON_THROW_ON_ERROR) !!};
     </script>
 
-    <script type="module" src="/vendor/triage/assets/app.js"></script>
+    <script type="module" src="{{ asset('vendor/triage/assets/app.js') }}"></script>
 </body>
 
 </html>

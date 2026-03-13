@@ -23,20 +23,20 @@ export default function TriageLayout(): React.JSX.Element {
     ];
 
     return (
-        <div className="flex h-screen bg-[#0d0f14] text-gray-100">
-            <aside className="flex w-44 flex-col border-r border-white/10 bg-[#111318]">
+        <div className="flex min-h-screen flex-col bg-[#0d0f14] text-gray-100 md:h-screen md:flex-row">
+            <aside className="flex w-full flex-col border-b border-white/10 bg-[#111318] md:w-52 md:border-b-0 md:border-r">
                 <div className="px-4 py-5">
                     <span className="text-lg font-semibold tracking-tight text-white">Triage</span>
                 </div>
 
-                <nav className="flex-1 space-y-0.5 px-2">
+                <nav className="flex flex-wrap gap-1 px-2 pb-3 md:flex-1 md:flex-col md:space-y-0.5 md:pb-0">
                     {navItems.map((item) => (
                         <NavLink
                             key={item.to}
                             to={item.to}
                             className={({ isActive }) =>
                                 [
-                                    'block rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                                    'rounded-md px-3 py-2 text-sm font-medium transition-colors',
                                     isActive
                                     || (item.to === '/tickets' && location.pathname === '/')
                                     || (item.label === 'My Queue' && currentAgent?.id === currentAssigneeId)
@@ -50,7 +50,7 @@ export default function TriageLayout(): React.JSX.Element {
                     ))}
                 </nav>
 
-                <div className="border-t border-white/10 px-4 py-4">
+                <div className="border-t border-white/10 px-4 py-4 md:mt-auto">
                     <div className="flex items-center gap-2">
                         <div className="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-600 text-xs font-medium text-white">
                             {(currentAgent?.name ?? 'A').charAt(0).toUpperCase()}
@@ -63,7 +63,7 @@ export default function TriageLayout(): React.JSX.Element {
                 </div>
             </aside>
 
-            <main className="flex-1 overflow-auto">
+            <main className="min-h-0 flex-1 overflow-auto">
                 <Outlet />
             </main>
         </div>

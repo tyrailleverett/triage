@@ -114,11 +114,11 @@ export default function Notifications(): React.JSX.Element {
     };
 
     return (
-        <div className="flex h-full flex-col">
-            <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
-                <div>
-                    <h1 className="text-xl font-semibold text-white">Settings</h1>
-                    <p className="mt-0.5 text-sm text-gray-400">
+            <div className="flex h-full flex-col">
+                <div className="flex flex-col gap-3 border-b border-white/10 px-4 py-4 md:flex-row md:items-center md:justify-between md:px-6">
+                    <div>
+                        <h1 className="text-xl font-semibold text-white">Settings</h1>
+                        <p className="mt-0.5 text-sm text-gray-400">
                         Manage your account and workspace preferences
                     </p>
                 </div>
@@ -144,13 +144,13 @@ export default function Notifications(): React.JSX.Element {
                 </div>
             )}
 
-            <div className="flex flex-1 overflow-hidden">
-                <SettingsNav active="notifications" />
+                <div className="flex flex-1 flex-col overflow-hidden md:flex-row">
+                    <SettingsNav active="notifications" />
 
-                <div className="flex-1 overflow-y-auto p-6">
-                    {isLoading ? (
-                        <div className="flex h-40 items-center justify-center text-gray-500">
-                            Loading…
+                    <div className="flex-1 overflow-y-auto p-4 md:p-6">
+                        {isLoading ? (
+                            <div className="flex h-40 items-center justify-center text-gray-500">
+                                Loading…
                         </div>
                     ) : (
                         <div className="rounded-lg border border-white/10 bg-white/5">
@@ -159,10 +159,7 @@ export default function Notifications(): React.JSX.Element {
                             </div>
                             <div className="divide-y divide-white/5">
                                 {notificationSettings.map((setting) => (
-                                    <div
-                                        key={setting.key}
-                                        className="flex items-center justify-between px-5 py-4"
-                                    >
+                                    <div key={setting.key} className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
                                         <div>
                                             <p className="text-sm font-medium text-white">{setting.label}</p>
                                             <p className="mt-0.5 text-xs text-gray-500">{setting.description}</p>
@@ -186,4 +183,3 @@ export default function Notifications(): React.JSX.Element {
         </div>
     );
 }
-

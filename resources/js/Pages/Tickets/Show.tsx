@@ -99,9 +99,9 @@ export default function TicketShow(): React.JSX.Element {
                 </div>
             </div>
 
-            <div className="flex flex-1 overflow-hidden">
+            <div className="flex flex-1 flex-col overflow-hidden xl:flex-row">
                 <div className="flex flex-1 flex-col overflow-hidden">
-                    <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+                    <div className="flex-1 space-y-4 overflow-y-auto px-4 py-4 md:px-6">
                         {thread.map((item) => (
                             <div
                                 key={`${item.itemType}-${item.id}`}
@@ -128,7 +128,7 @@ export default function TicketShow(): React.JSX.Element {
                         ))}
                     </div>
 
-                    <div className="border-t border-white/10 px-6 py-4 space-y-3">
+                    <div className="space-y-3 border-t border-white/10 px-4 py-4 md:px-6">
                         <MessageComposer
                             label="Reply"
                             onSubmit={handleReplySubmit}
@@ -141,7 +141,7 @@ export default function TicketShow(): React.JSX.Element {
                     </div>
                 </div>
 
-                <aside className="w-64 border-l border-white/10 overflow-y-auto">
+                <aside className="w-full border-t border-white/10 overflow-y-auto xl:w-72 xl:border-t-0 xl:border-l">
                     <TicketMetaPanel
                         ticket={ticket}
                         onChange={handleMetaChange}

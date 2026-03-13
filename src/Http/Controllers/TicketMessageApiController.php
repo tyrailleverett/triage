@@ -21,6 +21,6 @@ final class TicketMessageApiController
             agent: $request->user(),
         );
 
-        return response()->json(['data' => $message], 201);
+        return response()->json(['data' => $message->load('author')], 201);
     }
 }

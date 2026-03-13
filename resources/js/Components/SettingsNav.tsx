@@ -11,9 +11,9 @@ export default function SettingsNav({ active }: SettingsNavProps): React.JSX.Ele
     const placeholderClasses = 'text-gray-600 cursor-default';
 
     return (
-        <aside className="w-44 border-r border-white/10 p-4">
+        <aside className="w-full border-b border-white/10 p-4 md:w-52 md:border-b-0 md:border-r">
             <p className="mb-3 text-xs font-medium uppercase tracking-wide text-gray-500">Settings</p>
-            <nav className="space-y-0.5">
+            <nav className="flex flex-wrap gap-1 md:block md:space-y-0.5">
                 <span className={[baseClasses, active === 'profile' ? activeClasses : placeholderClasses].join(' ')}>
                     Profile
                 </span>
@@ -33,4 +33,3 @@ export default function SettingsNav({ active }: SettingsNavProps): React.JSX.Ele
         </aside>
     );
 }
-

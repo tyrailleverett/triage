@@ -65,8 +65,8 @@ export default function TicketMetaPanel({ ticket, onChange, currentAgent = null 
 
             <div>
                 <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-gray-500">Submitter</p>
-                <p className="text-sm text-gray-300">{ticket.submitter?.name ?? '—'}</p>
-                <p className="text-xs text-gray-600">{ticket.submitter?.email ?? ''}</p>
+                <p className="text-sm text-gray-300">{ticket.submitter?.name ?? ticket.submitter_name}</p>
+                <p className="text-xs text-gray-600">{ticket.submitter?.email ?? ticket.submitter_email}</p>
             </div>
 
             <div>

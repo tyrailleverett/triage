@@ -12,7 +12,7 @@ Triage ships with a pre-compiled React SPA (Horizon-style), a fluent SDK for pro
 
 - PHP 8.4+
 - Laravel 11.x or 12.x
-- PostgreSQL (primary supported database)
+- PostgreSQL or SQLite
 - A queue driver configured (database, Redis, etc.)
 
 ## Getting started
@@ -25,6 +25,8 @@ php artisan triage:install
 ```
 
 The install command publishes your config, runs all four migrations, and publishes the pre-compiled dashboard assets to `public/vendor/triage/`.
+
+For local package development, point your app at the repository with a Composer path repository, require `hotreloadstudios/triage`, then run `php artisan triage:install`.
 
 ### 2. Authorize access
 
@@ -39,6 +41,22 @@ Triage::auth(fn (User $user): bool => $user->isAdmin());
 ### 3. Open the dashboard
 
 Navigate to `/triage`. You're in.
+
+### Package tester walkthrough
+
+The `package-tester` app in this monorepo seeds a ready-to-use Triage workspace with these credentials:
+
+- Email: `test@example.com`
+- Password: `password`
+
+Seeded data includes open, pending, and resolved tickets plus notification preferences so you can immediately test list filters, ticket detail actions, replies, notes, assignment, and settings.
+
+## Screenshots
+
+![Ticket list](docs/images/dashboard-ticket-list.png)
+![Ticket detail](docs/images/dashboard-ticket-detail.png)
+![Create ticket](docs/images/dashboard-create-ticket.png)
+![Notification settings](docs/images/dashboard-notification-settings.png)
 
 ---
 

@@ -114,27 +114,27 @@ export default function TicketsIndex(): React.JSX.Element {
         : 'All Tickets';
 
     return (
-        <div className="p-6">
-            <div className="mb-6 flex items-center justify-between">
+        <div className="p-4 md:p-6">
+            <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <h1 className="text-xl font-semibold text-white">{heading}</h1>
                 <button
                     onClick={() => navigate('/tickets/create')}
-                    className="rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-500"
+                    className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-500"
                 >
                     New Ticket
                 </button>
             </div>
 
-            <div className="mb-4 flex items-center gap-3">
+            <div className="mb-4 flex flex-col gap-3 xl:flex-row xl:items-center">
                 <input
                     type="search"
                     placeholder="Search tickets…"
                     value={searchInputValue}
                     onChange={handleSearchChange}
-                    className="w-64 rounded-md border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    className="w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 xl:max-w-xs"
                 />
 
-                <div className="flex gap-1">
+                <div className="flex flex-wrap gap-1">
                     {statusOptions.map((opt) => (
                         <button
                             key={opt.value}
@@ -154,7 +154,7 @@ export default function TicketsIndex(): React.JSX.Element {
                 <select
                     value={filters.priority ?? ''}
                     onChange={(e) => updateFilters({ priority: (e.target.value as TicketPriority) || undefined })}
-                    className="rounded-md border border-white/10 bg-[#111318] px-3 py-1.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    className="rounded-md border border-white/10 bg-[#111318] px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 xl:min-w-44"
                 >
                     {priorityOptions.map((option) => (
                         <option key={option.label} value={option.value}>
